@@ -8130,6 +8130,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_SettingsWideMultiplier" = "Wide Messages Multiplier";
 "ayu_SettingsWideMultiplierDescription" = "You can change message width for better display on wide monitors.";
 "ayu_StickerPanelScale" = "Sticker panel scale";
+"ayu_PinnedBarHidden" = "Pinned messages hidden. Click to re-show.";
+"ayu_ShowPinnedMessages" = "Show pinned messages";
 "ayu_SettingsSpoofWebviewAsAndroid" = "Spoof Client as Android";
 "ayu_SettingsBiggerWindow" = "Bigger Window";
 "ayu_SettingsIncreaseWebviewHeight" = "Increase Content Height";

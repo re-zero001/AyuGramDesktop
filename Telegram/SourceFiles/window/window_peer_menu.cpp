@@ -339,6 +339,7 @@ private:
 	void addViewAsMessages();
 	void addViewAsTopics();
 	void addSearchTopics();
+	void addRestorePinnedMessages();
 	void addDeleteTopic();
 	void addVideoChat();
 	void addViewStatistics();
@@ -1694,6 +1695,46 @@ void Filler::addSearchTopics() {
 	}, &st::menuIconSearch);
 }
 
+void Filler::addRestorePinnedMessages() {
+	if (!_peer || !_thread) {
+		return;
+	}
+	const auto topicRootId = _topic ? _topic->rootId() : MsgId(0);
+	const auto monoforumPeerId = _thread->monoforumPeerId();
+	const auto currentPinnedId = Data::ResolveTopPinnedId(
+		_peer,
+		topicRootId,
+		monoforumPeerId);
+	const auto universalPinnedId = currentPinnedId
+		? currentPinnedId.msg
+		: MsgId(0);
+	if (!universalPinnedId) {
+		return;
+	}
+	const auto hiddenId = _peer->session().settings().hiddenPinnedMessageId(
+		_peer->id,
+		topicRootId,
+		monoforumPeerId);
+	if (hiddenId != universalPinnedId) {
+		return;
+	}
+	const auto controller = _controller;
+	const auto peer = _peer;
+	const auto thread = _thread;
+	_addAction(tr::ayu_ShowPinnedMessages(tr::now), [=] {
+		peer->session().settings().setHiddenPinnedMessageId(
+			peer->id,
+			topicRootId,
+			monoforumPeerId,
+			MsgId(0));
+		peer->session().saveSettingsDelayed();
+		peer->session().changes().entryUpdated(
+			thread,
+			Data::EntryUpdate::Flag::HasPinnedMessages);
+		controller->showPeerHistory(peer->id);
+	}, &st::menuIconPin);
+}
+
 void Filler::fillChatsListActions() {
 	if (!_peer || !_peer->isForum()) {
 		return;
@@ -1770,6 +1811,7 @@ void Filler::fillHistoryActions() {
 	AyuUi::AddAyuGramActions(_peer, _thread, _controller, _addAction);
 	addCreateTopic();
 	addInfo();
+	addRestorePinnedMessages();
 	AyuUi::AddJumpToBeginningAction(_peer, _thread, _controller, _addAction);
 	AyuUi::AddOpenChannelAction(_peer, _controller, _addAction);
 	addViewAsTopics();
