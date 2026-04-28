@@ -795,9 +795,11 @@ void WrapWidget::finishShowContent() {
 		std::vector<std::shared_ptr<ContentMemento>> stack;
 		stack.push_back(std::move(contentMemento));
 		const auto sectionMemento = std::make_shared<Memento>(std::move(stack));
+		const auto params = Window::SectionShow(
+			Window::SectionShow::Way::Backward,
+			anim::type::instant);
 
-		showBackFromStackInternal(Window::SectionShow(anim::type::instant));
-		showInternal(sectionMemento.get(), Window::SectionShow(anim::type::instant));
+		showInternal(sectionMemento.get(), params);
 	}, _content->lifetime());
 }
 

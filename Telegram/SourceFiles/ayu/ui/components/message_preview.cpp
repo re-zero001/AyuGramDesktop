@@ -87,10 +87,11 @@ MessagePreview::MessagePreview(
 			.messageId = _state->reply->data()->fullId(),
 		},
 		.date = base::unixtime::now(),
-	}, TextWithEntities{ u"You need to touch some grass."_q },
+	}, TextWithEntities{ u"You need to go outside and touch some grass..."_q },
 	MTP_messageMediaEmpty());
 
 	messageItem->setDeleted();
+	messageItem->markDeletedAnimated();
 
 	_state->item = AdminLog::OwnedItem(
 		_state->delegate.get(),
@@ -99,7 +100,7 @@ MessagePreview::MessagePreview(
 	auto edition = HistoryMessageEdition();
 	edition.editDate = base::unixtime::now();
 	edition.textWithEntities = TextWithEntities{
-		u"You need to touch some grass."_q,
+		u"You need to go outside and touch some grass..."_q,
 	};
 	edition.useSameViews = true;
 	edition.useSameForwards = true;

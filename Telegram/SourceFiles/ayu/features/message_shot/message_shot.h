@@ -26,6 +26,7 @@ enum RenderPart
 {
 	Date,
 	Reactions,
+	HeaderDecorations,
 };
 
 void setShotConfig(ShotConfig &config);

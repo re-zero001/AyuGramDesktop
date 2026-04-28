@@ -49,6 +49,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/ayu_settings.h"
+#include "ayu/ui/ayu_logo.h"
+#include "platform/win/windows_app_user_model_id.h"
+#include <QtCore/QDir>
+#include <propkey.h>
+#include <propvarutil.h>
 
 
 // Taken from qtbase/src/gui/image/qpixmap_win.cpp
@@ -106,6 +111,35 @@ private:
 		}
 	}
 	return nullptr;
+}
+
+void UpdateTaskbarRelaunchIcon(HWND hWnd) {
+	auto propertyStore = ComPtr<IPropertyStore>();
+	auto hr = SHGetPropertyStoreForWindow(
+		hWnd,
+		IID_PPV_ARGS(&propertyStore));
+	if (!SUCCEEDED(hr)) {
+		return;
+	}
+
+	const auto setString = [&](
+			const PROPERTYKEY &key,
+			const std::wstring &value) {
+		auto prop = PROPVARIANT();
+		hr = InitPropVariantFromString(value.c_str(), &prop);
+		if (!SUCCEEDED(hr)) {
+			return;
+		}
+		hr = propertyStore->SetValue(key, prop);
+		PropVariantClear(&prop);
+	};
+
+	setString(AppUserModelId::Key(), AppUserModelId::Id());
+	setString(
+		PKEY_AppUserModel_RelaunchIconResource,
+		QDir::toNativeSeparators(AyuAssets::appIcoPath()).toStdWString()
+			+ L",0");
+	propertyStore->Commit();
 }
 
 struct RealSize {
@@ -616,6 +650,7 @@ void MainWindow::updateTaskbarAndIconCounters() {
 		GetSystemMetrics(SM_CXICON),
 		GetSystemMetrics(SM_CYICON));
 	const auto supportMode = session && session->supportMode();
+	UpdateTaskbarRelaunchIcon(_hWnd);
 
 	auto iconSmallPixmap16 = Tray::IconWithCounter(
 		Tray::CounterLayerArgs(16, counter, muted),

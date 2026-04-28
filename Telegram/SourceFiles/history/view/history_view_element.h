@@ -493,6 +493,7 @@ public:
 	[[nodiscard]] HistoryItem *textItem() const;
 	[[nodiscard]] Ui::Text::IsolatedEmoji isolatedEmoji() const;
 	[[nodiscard]] Ui::Text::OnlyCustomEmoji onlyCustomEmoji() const;
+	void skipInactiveTextAppearing();
 
 	[[nodiscard]] OnlyEmojiAndSpaces isOnlyEmojiAndSpaces() const;
 
@@ -626,7 +627,6 @@ public:
 
 	virtual void itemDataChanged();
 	void itemTextUpdated();
-	void itemTextUpdatedStreaming();
 	void blockquoteExpandChanged();
 
 	virtual void unloadHeavyPart();
@@ -729,6 +729,7 @@ protected:
 
 	[[nodiscard]] const Ui::Text::String &text() const;
 	[[nodiscard]] int textHeightFor(int textWidth) const;
+	[[nodiscard]] int textRealWidth() const { return _textRealWidth; }
 	void validateText();
 	void validateTextSkipBlock(bool has, int width, int height);
 	void validateInlineKeyboard(HistoryMessageReplyMarkup *markup);
@@ -790,7 +791,8 @@ private:
 
 	HistoryItem *_textItem = nullptr;
 	mutable Ui::Text::String _text;
-	mutable int _textWidth = -1;
+	mutable uint32 _textWidth : 16 = 0;
+	mutable uint32 _textRealWidth : 16 = 0;
 	mutable int _textHeight = 0;
 
 	int _y = 0;

@@ -63,7 +63,7 @@ void BuildAppIcon(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		};
 	});
 
-#ifdef Q_OS_WIN
+#if defined Q_OS_WIN || defined Q_OS_MAC
 	builder.addDivider();
 	builder.addSkip();
 	ayu.addSettingToggle({

@@ -51,7 +51,8 @@ struct CollapsibleToggleResult {
 CollapsibleToggleResult AddCollapsibleToggle(not_null<Ui::VerticalLayout*> container,
 						  rpl::producer<QString> title,
 						  std::vector<NestedEntry> checkboxes,
-						  bool toggledWhenAll);
+						  bool toggledWhenAll,
+						  QString description = QString());
 
 void AddChooseButtonWithIconAndRightTextInner(not_null<Ui::VerticalLayout*> container,
 											  not_null<Window::SessionController*> controller,

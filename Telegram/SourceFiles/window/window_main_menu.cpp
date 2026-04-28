@@ -791,11 +791,10 @@ void MainMenu::setupMenu() {
 				MarkAsReadChatList(chats);
 
 				// slight delay for forums to send packets
-				dispatchToMainThread([=]() mutable
-				{
+				dispatchToMainThread(crl::guard(controller, [=] {
 					auto &ghost = AyuSettings::ghost(&controller->session());
 					ghost.setSendReadMessages(prev);
-				}, 200);
+				}), 200);
 				close();
 			};
 

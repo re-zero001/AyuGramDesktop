@@ -325,7 +325,8 @@ not_null<Ui::RpWidget*> AddInnerToggle(not_null<Ui::VerticalLayout*> container,
 CollapsibleToggleResult AddCollapsibleToggle(not_null<Ui::VerticalLayout*> container,
 						  rpl::producer<QString> title,
 						  std::vector<NestedEntry> checkboxes,
-						  bool toggledWhenAll) {
+						  bool toggledWhenAll,
+						  QString description) {
 	struct CheckboxEntry {
 		not_null<Ui::AbstractCheckView*> checkView;
 		Ui::Checkbox *checkbox = nullptr;
@@ -417,12 +418,6 @@ CollapsibleToggleResult AddCollapsibleToggle(not_null<Ui::VerticalLayout*> conta
 				anim::type::normal);
 		});
 
-		checkView->checkedChanges(
-		) | on_next([=](bool checked)
-							{
-							},
-							verticalLayout->lifetime());
-
 		checkView->checkedValue(
 		) | on_next([=](bool enabled)
 							{
@@ -438,6 +433,11 @@ CollapsibleToggleResult AddCollapsibleToggle(not_null<Ui::VerticalLayout*> conta
 				? entry.lockGetter
 				: Fn<bool()>(nullptr));
 		}
+	}
+
+	if (!description.isEmpty()) {
+		Ui::AddDividerText(verticalLayout, rpl::single(std::move(description)));
+		Ui::AddSkip(verticalLayout);
 	}
 
 	// Apply initial lock visuals.

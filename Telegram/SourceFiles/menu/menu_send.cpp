@@ -749,7 +749,7 @@ FillMenuResult FillSendMenu(
 		const auto &ghost = maybeShow
 			? AyuSettings::ghost(&maybeShow->session())
 			: AyuSettings::ghost();
-		const auto sendWithoutSound = ghost.sendWithoutSound();
+		const auto sendWithoutSound = ghost.shouldSendWithoutSound();
 		menu->addAction(
 			sendWithoutSound ? tr::ayu_SendWithSound(tr::now) : tr::lng_send_silent_message(tr::now),
 			[=] { action({ Api::SendOptions{ .silent = true } }, details); },

@@ -289,6 +289,9 @@ HistoryWidget::HistoryWidget(
 , _aiButton(Ui::CreateChild<HistoryView::Controls::ComposeAiButton>(
 	this,
 	st::historyAiComposeButton))
+, _sendAsFile(Ui::CreateChild<Ui::IconButton>(
+	this,
+	st::historySendAsFileButton))
 , _unblock(
 	this,
 	tr::lng_unblock_button(tr::now).toUpper(),
@@ -530,6 +533,7 @@ HistoryWidget::HistoryWidget(
 
 	setupFastButtonMode();
 	initAiButton();
+	initSendAsFileButton();
 
 	_fieldCharsCountManager.limitExceeds(
 	) | rpl::on_next([=] {
@@ -568,6 +572,20 @@ HistoryWidget::HistoryWidget(
 	_field->setMimeDataHook(WrappedMessageFieldMimeHook([=](
 			not_null<const QMimeData*> data,
 			Ui::InputField::MimeAction action) {
+		const auto pasteResult = Ui::CheckLargeTextPaste(_field, data);
+		if (pasteResult.exceeds) {
+			if (action == Ui::InputField::MimeAction::Check) {
+				return true;
+			}
+			const auto text = _field->getTextWithTags();
+			const auto cursor = _field->textCursor();
+			sendTextAsFile(
+				pasteResult.resultingText,
+				text,
+				cursor.position(),
+				cursor.anchor());
+			return true;
+		}
 		if (action == Ui::InputField::MimeAction::Check) {
 			return canSendFiles(data);
 		} else if (action == Ui::InputField::MimeAction::Insert) {
@@ -692,11 +710,6 @@ HistoryWidget::HistoryWidget(
 		return !_list && (item->mainView() != nullptr);
 	}) | rpl::on_next([=](not_null<HistoryItem*> item) {
 		item->mainView()->itemDataChanged();
-	}, lifetime());
-
-	session().data().drawToReplyRequests(
-	) | rpl::on_next([=](Data::DrawToReplyRequest request) {
-		handleDrawToReplyRequest(std::move(request));
 	}, lifetime());
 
 	rpl::merge(
@@ -1419,6 +1432,7 @@ void HistoryWidget::initVoiceRecordBar() {
 		_field->setDisabled(active);
 		controller()->widget()->setInnerFocus();
 		updateAiButtonVisibility();
+		updateSendAsFileVisibility();
 	}, lifetime());
 
 	_voiceRecordBar->hideFast();
@@ -1438,7 +1452,68 @@ void HistoryWidget::initAiButton() {
 	_aiTooltipManager = std::make_unique<HistoryView::Controls::AiTooltipManager>(
 		this,
 		_aiButton,
+		tr::lng_ai_compose_tooltip(tr::rich),
+		"ai_compose_tooltip_hidden"_cs,
 		[=] { return width(); });
+}
+
+void HistoryWidget::initSendAsFileButton() {
+	_sendAsFile->hide();
+	_sendAsFile->setClickedCallback([=] {
+		if (_sendAsFileTooltipManager) {
+			_sendAsFileTooltipManager->hideAndRemember();
+		}
+		const auto cursor = _field->textCursor();
+		const auto text = _field->getTextWithTags();
+		sendTextAsFile(text.text, text, cursor.position(), cursor.anchor());
+	});
+
+	_sendAsFileTooltipManager = std::make_unique<HistoryView::Controls::AiTooltipManager>(
+		this,
+		_sendAsFile,
+		tr::lng_send_as_file_tooltip(tr::rich),
+		"send_as_file_tooltip_hidden"_cs,
+		[=] { return width(); });
+}
+
+void HistoryWidget::sendTextAsFile(
+		const QString &fileText,
+		TextWithTags restoreText,
+		int restorePosition,
+		int restoreAnchor) {
+	auto result = Ui::PrepareTextAsFile(fileText);
+
+	_field->setTextWithTags({});
+
+	auto box = Box<SendFilesBox>(
+		controller(),
+		std::move(result),
+		TextWithTags{},
+		_peer,
+		Api::SendType::Normal,
+		sendMenuDetails());
+	box->setReplyTo(replyTo());
+	box->setConfirmedCallback(crl::guard(this, [=](
+			std::shared_ptr<Ui::PreparedBundle> bundle,
+			Api::SendOptions options,
+			FullReplyTo currentReplyTo) {
+		if (!currentReplyTo.messageId && replyTo().messageId) {
+			cancelReply();
+		}
+		sendingFilesConfirmed(std::move(bundle), options);
+	}));
+	box->setCancelledCallback(crl::guard(this, [=] {
+		_field->setTextWithTags(restoreText);
+		auto cursor = _field->textCursor();
+		cursor.setPosition(restoreAnchor);
+		if (restorePosition != restoreAnchor) {
+			cursor.setPosition(restorePosition, QTextCursor::KeepAnchor);
+		}
+		_field->setTextCursor(cursor);
+	}));
+
+	Window::ActivateWindow(controller());
+	controller()->show(std::move(box));
 }
 
 void HistoryWidget::initTabbedSelector() {
@@ -1954,6 +2029,7 @@ void HistoryWidget::orderWidgets() {
 	_voiceRecordBar->raise();
 	_send->raise();
 	_aiButton->raise();
+	_sendAsFile->raise();
 	_topBars->raise();
 	if (_businessBotStatus) {
 		_businessBotStatus->bar().raise();
@@ -2006,6 +2082,9 @@ void HistoryWidget::orderWidgets() {
 	}
 	if (_aiTooltipManager) {
 		_aiTooltipManager->raise();
+	}
+	if (_sendAsFileTooltipManager) {
+		_sendAsFileTooltipManager->raise();
 	}
 	_attachDragAreas.document->raise();
 	_attachDragAreas.photo->raise();
@@ -2081,6 +2160,7 @@ void HistoryWidget::fieldChanged() {
 		updateControlsGeometry();
 	}
 	updateAiButtonVisibility();
+	updateSendAsFileVisibility();
 
 	_saveCloudDraftTimer.cancel();
 	if (!_peer || !(_textUpdateEvents & TextUpdateEvent::SaveDraft)) {
@@ -3906,6 +3986,7 @@ void HistoryWidget::updateControlsVisibility() {
 	}
 	//checkTabbedSelectorToggleTooltip();
 	updateAiButtonVisibility();
+	updateSendAsFileVisibility();
 	updateMouseTracking();
 }
 
@@ -4046,16 +4127,16 @@ void HistoryWidget::maybeMarkReactionsRead(not_null<HistoryItem*> item) {
 	session().api().markContentsRead(item);
 }
 
-void HistoryWidget::handleDrawToReplyRequest(
+bool HistoryWidget::handleDrawToReplyRequest(
 		Data::DrawToReplyRequest request) {
 	if (!_peer || request.messageId.peer != _peer->id) {
-		return;
+		return false;
 	}
 	auto image = HistoryView::ResolveDrawToReplyImage(
 		&session().data(),
 		request);
 	if (image.isNull()) {
-		return;
+		return false;
 	}
 	const auto replyTo = request.messageId;
 	HistoryView::OpenDrawToReplyEditor(
@@ -4074,6 +4155,7 @@ void HistoryWidget::handleDrawToReplyRequest(
 				st::sendMediaPreviewSize);
 			confirmSendingFiles(std::move(list));
 		}));
+	return true;
 }
 
 void HistoryWidget::unreadCountUpdated() {
@@ -6309,6 +6391,7 @@ void HistoryWidget::toggleKeyboard(bool manual) {
 	}
 	updateControlsGeometry();
 	updateAiButtonVisibility();
+	updateSendAsFileVisibility();
 	updateFieldPlaceholder();
 	SWITCH_BUTTON(_tabbedSelectorToggle, _botKeyboardHide->isHidden()
 		&& canWriteMessage()
@@ -6454,6 +6537,12 @@ bool HistoryWidget::hasEnoughLinesForAi() const {
 		&& Ui::HasEnoughLinesForAi(&session(), _field);
 }
 
+bool HistoryWidget::textExceedsMaxSize() const {
+	return _history
+		&& !_voiceRecordBar->isActive()
+		&& _field->getLastText().size() > MaxMessageSize;
+}
+
 void HistoryWidget::updateAiButtonVisibility() {
 	const auto hidden = !hasEnoughLinesForAi()
 		|| !_send->isVisible()
@@ -6479,6 +6568,34 @@ void HistoryWidget::updateAiButtonGeometry() {
 	_aiButton->move(QPoint(x, _field->y()) + st::historyAiComposeButtonPosition);
 	if (_aiTooltipManager) {
 		_aiTooltipManager->updateGeometry();
+	}
+}
+
+void HistoryWidget::updateSendAsFileVisibility() {
+	const auto hidden = !textExceedsMaxSize()
+		|| _send->isHidden()
+		|| _field->isHidden()
+		|| editingMessage();
+	if (_sendAsFile->isHidden() == hidden) {
+		return;
+	}
+	_sendAsFile->setVisible(!hidden);
+	if (!hidden) {
+		updateSendAsFileGeometry();
+	}
+	if (_sendAsFileTooltipManager) {
+		_sendAsFileTooltipManager->updateVisibility(!hidden);
+	}
+}
+
+void HistoryWidget::updateSendAsFileGeometry() {
+	if (_sendAsFile->isHidden()) {
+		return;
+	}
+	const auto x = _send->x() + _send->width() - _sendAsFile->width();
+	_sendAsFile->move(QPoint(x, _field->y()) + st::historyAiComposeButtonPosition);
+	if (_sendAsFileTooltipManager) {
+		_sendAsFileTooltipManager->updateGeometry();
 	}
 }
 
@@ -6556,6 +6673,7 @@ void HistoryWidget::moveFieldControls() {
 		_ttlInfo->move(width() - right - _ttlInfo->width(), buttonsBottom);
 	}
 	updateAiButtonGeometry();
+	updateSendAsFileGeometry();
 
 	_fieldBarCancel->moveToRight(
 		0,
@@ -6663,6 +6781,7 @@ void HistoryWidget::inlineBotChanged() {
 void HistoryWidget::fieldResized() {
 	moveFieldControls();
 	updateAiButtonVisibility();
+	updateSendAsFileVisibility();
 	updateHistoryGeometry();
 	updateField();
 }
@@ -6866,10 +6985,15 @@ bool HistoryWidget::confirmSendingFiles(
 		Api::SendType::Normal,
 		sendMenuDetails(),
 		[=](const TextWithTags &text) { _field->setTextWithTags(text); });
+	box->setReplyTo(replyTo());
 	_field->setTextWithTags({});
 	box->setConfirmedCallback(crl::guard(this, [=](
 			std::shared_ptr<Ui::PreparedBundle> bundle,
-			Api::SendOptions options) {
+			Api::SendOptions options,
+			FullReplyTo currentReplyTo) {
+		if (!currentReplyTo.messageId && replyTo().messageId) {
+			cancelReply();
+		}
 		sendingFilesConfirmed(std::move(bundle), options);
 	}));
 	box->setCancelledCallback(crl::guard(this, [=] {

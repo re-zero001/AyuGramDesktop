@@ -45,6 +45,12 @@ enum class TranslationProvider {
 	Native = 3,
 };
 
+enum class SendWithoutSoundOption {
+	Never = 0,
+	InGhostMode = 1,
+	Always = 2,
+};
+
 NLOHMANN_JSON_SERIALIZE_ENUM(PeerIdDisplay, {
 	{PeerIdDisplay::Hidden, 0},
 	{PeerIdDisplay::TelegramApi, 1},
@@ -70,6 +76,12 @@ NLOHMANN_JSON_SERIALIZE_ENUM(TranslationProvider, {
 	{TranslationProvider::Native, "native"},
 })
 
+NLOHMANN_JSON_SERIALIZE_ENUM(SendWithoutSoundOption, {
+	{SendWithoutSoundOption::Never, 0},
+	{SendWithoutSoundOption::InGhostMode, 1},
+	{SendWithoutSoundOption::Always, 2},
+})
+
 class GhostModeAccountSettings {
 public:
 	GhostModeAccountSettings();
@@ -81,7 +93,9 @@ public:
 	[[nodiscard]] bool sendOfflinePacketAfterOnline() const { return _sendOfflinePacketAfterOnline.current(); }
 	[[nodiscard]] bool markReadAfterAction() const { return _markReadAfterAction.current(); }
 	[[nodiscard]] bool useScheduledMessages() const { return _useScheduledMessages.current(); }
-	[[nodiscard]] bool sendWithoutSound() const { return _sendWithoutSound.current(); }
+	[[nodiscard]] SendWithoutSoundOption sendWithoutSound() const { return _sendWithoutSound.current(); }
+	[[nodiscard]] bool shouldSendWithoutSound() const;
+	[[nodiscard]] bool suggestGhostModeBeforeViewingStory() const { return _suggestGhostModeBeforeViewingStory.current(); }
 	[[nodiscard]] bool isGhostModeActive() const { return _ghostModeActive.current(); }
 	[[nodiscard]] bool isUseScheduledMessages() const { return isGhostModeActive() && useScheduledMessages(); }
 
@@ -98,7 +112,8 @@ public:
 	void setSendOfflinePacketAfterOnline(bool val);
 	void setMarkReadAfterAction(bool val);
 	void setUseScheduledMessages(bool val);
-	void setSendWithoutSound(bool val);
+	void setSendWithoutSound(SendWithoutSoundOption val);
+	void setSuggestGhostModeBeforeViewingStory(bool val);
 	void setGhostModeEnabled(bool val);
 
 	void setSendReadMessagesLocked(bool val);
@@ -121,8 +136,10 @@ public:
 	[[nodiscard]] rpl::producer<bool> markReadAfterActionChanges() const { return _markReadAfterAction.changes(); }
 	[[nodiscard]] rpl::producer<bool> useScheduledMessagesValue() const { return _useScheduledMessages.value(); }
 	[[nodiscard]] rpl::producer<bool> useScheduledMessagesChanges() const { return _useScheduledMessages.changes(); }
-	[[nodiscard]] rpl::producer<bool> sendWithoutSoundValue() const { return _sendWithoutSound.value(); }
-	[[nodiscard]] rpl::producer<bool> sendWithoutSoundChanges() const { return _sendWithoutSound.changes(); }
+	[[nodiscard]] rpl::producer<SendWithoutSoundOption> sendWithoutSoundValue() const { return _sendWithoutSound.value(); }
+	[[nodiscard]] rpl::producer<SendWithoutSoundOption> sendWithoutSoundChanges() const { return _sendWithoutSound.changes(); }
+	[[nodiscard]] rpl::producer<bool> suggestGhostModeBeforeViewingStoryValue() const { return _suggestGhostModeBeforeViewingStory.value(); }
+	[[nodiscard]] rpl::producer<bool> suggestGhostModeBeforeViewingStoryChanges() const { return _suggestGhostModeBeforeViewingStory.changes(); }
 	[[nodiscard]] rpl::producer<bool> ghostModeActiveValue() const { return _ghostModeActive.value(); }
 	[[nodiscard]] rpl::producer<bool> ghostModeActiveChanges() const { return _ghostModeActive.changes(); }
 
@@ -150,7 +167,8 @@ private:
 	rpl::variable<bool> _sendOfflinePacketAfterOnline = false;
 	rpl::variable<bool> _markReadAfterAction = true;
 	rpl::variable<bool> _useScheduledMessages = false;
-	rpl::variable<bool> _sendWithoutSound = false;
+	rpl::variable<SendWithoutSoundOption> _sendWithoutSound = SendWithoutSoundOption::Never;
+	rpl::variable<bool> _suggestGhostModeBeforeViewingStory = true;
 	rpl::variable<bool> _ghostModeActive = false;
 
 	rpl::variable<bool> _sendReadMessagesLocked = false;
@@ -604,7 +622,7 @@ private:
 	rpl::variable<bool> _semiTransparentDeletedMessages = false;
 	rpl::variable<bool> _disableAds = true;
 	rpl::variable<bool> _disableStories = false;
-	rpl::variable<bool> _disableCustomBackgrounds = true;
+	rpl::variable<bool> _disableCustomBackgrounds = false;
 	rpl::variable<bool> _showOnlyAddedEmojisAndStickers = false;
 	rpl::variable<bool> _collapseSimilarChannels = true;
 	rpl::variable<bool> _hideSimilarChannels = false;
@@ -668,7 +686,7 @@ private:
 	rpl::variable<PeerIdDisplay> _showPeerId = PeerIdDisplay::BotApi;
 	rpl::variable<bool> _showMessageSeconds = false;
 	rpl::variable<bool> _showMessageShot = true;
-	rpl::variable<bool> _filterZalgo = true;
+	rpl::variable<bool> _filterZalgo = false;
 	rpl::variable<bool> _stickerConfirmation = false;
 	rpl::variable<bool> _gifConfirmation = false;
 	rpl::variable<bool> _voiceConfirmation = false;

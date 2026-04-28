@@ -25,7 +25,7 @@ namespace AyuUi {
 
 bool ShouldShowContextMenuItem(ContextMenuVisibility state);
 
-void AddDeletedMessagesActions(PeerData *peerData,
+void AddAyuGramActions(PeerData *peerData,
 							   Data::Thread *thread,
 							   not_null<Window::SessionController*> sessionController,
 							   const Window::PeerMenuCallback &addCallback);

@@ -156,7 +156,7 @@ void sendMedia(
 	Api::MessageToSend &&message,
 	bool sendImagesAsPhotos) {
 	if (const auto document = primaryMedia->document(); document && document->sticker()) {
-		AyuSync::sendStickerSync(session, message, document);
+		AyuSync::sendStickerSync(session, std::move(message), document);
 		return;
 	}
 
@@ -245,12 +245,17 @@ void intelligentForward(
 	const Api::SendAction &action,
 	const Data::ResolvedForwardDraft &draft) {
 	const auto history = action.history;
-	crl::on_main([&]
+	const auto topicRootId = action.replyTo.topicRootId;
+	const auto monoforumPeerId = action.replyTo.monoforumPeerId;
+	crl::on_main([=]
 	{
-		history->setForwardDraft(action.replyTo.topicRootId, action.replyTo.monoforumPeerId, {});
+		history->setForwardDraft(topicRootId, monoforumPeerId, {});
 	});
 
 	const auto items = draft.items;
+	if (items.empty()) {
+		return;
+	}
 	const auto peer = history->peer;
 
 	auto chunks = std::vector<ForwardChunk>();
@@ -312,9 +317,11 @@ void forwardMessages(
 	const auto history = action.history;
 	const auto peer = history->peer;
 
-	crl::on_main([&]
+	const auto topicRootId = action.replyTo.topicRootId;
+	const auto monoforumPeerId = action.replyTo.monoforumPeerId;
+	crl::on_main([=]
 	{
-		history->setForwardDraft(action.replyTo.topicRootId, action.replyTo.monoforumPeerId, {});
+		history->setForwardDraft(topicRootId, monoforumPeerId, {});
 	});
 
 	std::shared_ptr<ForwardState> state;
@@ -378,10 +385,10 @@ void forwardMessages(
 		}
 
 		if (!mediaDownloadable(item->media())) {
-			AyuSync::sendMessageSync(session, message);
+			AyuSync::sendMessageSync(session, std::move(message));
 		} else if (const auto media = item->media()) {
 			if (media->poll()) {
-				AyuSync::sendMessageSync(session, message);
+				AyuSync::sendMessageSync(session, std::move(message));
 				continue;
 			}
 

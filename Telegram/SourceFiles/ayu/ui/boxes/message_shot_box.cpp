@@ -194,7 +194,8 @@ void MessageShotBox::setupContent() {
 				|| !badgeText.isEmpty()
 				|| (item->boostsApplied() > 0);
 		}
-		if (hasReactions && hasReplies && hasSpoilers) {
+		if (hasReactions && hasReplies && hasHeaderDecorations
+			&& hasSpoilers) {
 			break;
 		}
 	}
@@ -334,13 +335,14 @@ void MessageShotBox::setupContent() {
 			},
 			content->lifetime());
 	}
-	
+
 	if (hasHeaderDecorations) {
-		AddButtonWithIcon(
+		latestToggle = AddButtonWithIcon(
 			content,
 			tr::ayu_MessageShotShowHeaderDecorations(),
 			st::settingsButtonNoIcon
-		)->toggleOn(rpl::single(shotSettings.showHeaderDecorations())
+		);
+		latestToggle->toggleOn(rpl::single(shotSettings.showHeaderDecorations())
 		)->toggledValue(
 		) | rpl::skip(1) | on_next(
 			[=](bool enabled)

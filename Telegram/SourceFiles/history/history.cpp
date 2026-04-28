@@ -1456,6 +1456,8 @@ void History::applyServiceChanges(
 							answer.vtext());
 						if (!poll->answerByOption(parsed.option)) {
 							poll->answers.push_back(std::move(parsed));
+							++poll->version;
+							owner().notifyPollUpdateDelayed(poll);
 						}
 					}, [](const auto &) {});
 				}
@@ -1470,9 +1472,14 @@ void History::applyServiceChanges(
 				if (const auto poll = media->poll()) {
 					const auto option = del->answer.option;
 					auto &answers = poll->answers;
+					const auto size = answers.size();
 					answers.erase(
 						ranges::remove(answers, option, &PollAnswer::option),
 						end(answers));
+					if (answers.size() != size) {
+						++poll->version;
+						owner().notifyPollUpdateDelayed(poll);
+					}
 				}
 			}
 		}
@@ -1603,9 +1610,6 @@ void History::newItemAdded(not_null<HistoryItem*> item) {
 	}
 	if (const auto sublist = item->savedSublist()) {
 		sublist->applyItemAdded(item);
-	}
-	if (const auto streamed = _streamedDrafts.get()) {
-		streamed->applyItemAdded(item);
 	}
 	if (const auto media = item->media()) {
 		if (const auto gift = media->gift()) {
@@ -3971,6 +3975,10 @@ HistoryStreamedDrafts &History::streamedDrafts() {
 		_streamedDrafts = std::make_unique<HistoryStreamedDrafts>(this);
 	}
 	return *_streamedDrafts;
+}
+
+HistoryStreamedDrafts *History::streamedDraftsIfExists() const {
+	return _streamedDrafts.get();
 }
 
 HistoryItem *History::joinedMessageInstance() const {

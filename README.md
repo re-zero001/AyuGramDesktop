@@ -102,10 +102,10 @@ Install `ayugram-desktop` from [nixpkgs](https://search.nixos.org/packages?chann
 
 ### Gentoo Linux
 
-See [this repository](https://github.com/OverLessArtem/ayugram-ebuild-gentoo) for installation manual.
+See [this repository](https://codeberg.org/OverLessArtem/ayugram-ebuild-gentoo) for installation manual.
 
 ### Void Linux
-See [this repository](https://github.com/OverLessArtem/ayugram-template-void) for installation manual.
+See [this repository](https://codeberg.org/OverLessArtem/ayugram-template-void) for installation manual.
 
 ### EPM
 
@@ -161,4 +161,4 @@ Enjoy using **AyuGram**? Consider sending us a tip!
 
 ### Bots
 
-- [TelegramDB](https://t.me/tgdatabase) for username lookup by ID
+- [TelegramDB](https://t.me/tgdatabase) for username lookup by ID (until closing free inline mode at 2 April 2026)

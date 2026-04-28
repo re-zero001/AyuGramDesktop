@@ -31,7 +31,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_unread_things.h"
 #include "history/view/history_view_item_preview.h"
 #include "history/view/history_view_send_action.h"
-#include "lang/lang_instance.h"
 #include "lang/lang_keys.h"
 #include "lottie/lottie_icon.h"
 #include "main/main_session.h"
@@ -52,6 +51,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_window.h"
 
 // AyuGram includes
+#include "ayu/features/filters/filters_controller.h"
 #include "styles/style_ayu_icons.h"
 
 
@@ -91,8 +91,11 @@ void PaintRowTopRight(
 		QPainter &p,
 		const QString &text,
 		QRect &rectForName,
-		const PaintContext &context) {
-	const auto width = st::dialogsDateFont->width(text);
+		const PaintContext &context,
+		int precomputedWidth = -1) {
+	const auto width = (precomputedWidth >= 0)
+		? precomputedWidth
+		: st::dialogsDateFont->width(text);
 	rectForName.setWidth(rectForName.width() - width - st::dialogsDateSkip);
 	p.setFont(st::dialogsDateFont);
 	p.setPen(context.active
@@ -383,6 +386,19 @@ enum class Flag {
 };
 inline constexpr bool is_flag_type(Flag) { return true; }
 
+void PaintDialogDate(
+		QPainter &p,
+		not_null<const Entry*> entry,
+		const FakeRow *fakeRow,
+		TimeId date,
+		QRect &rectForName,
+		const PaintContext &context) {
+	const auto resolved = fakeRow
+		? fakeRow->dateText(date, context.now)
+		: entry->chatListTimestampText(date, context.now);
+	PaintRowTopRight(p, resolved.text, rectForName, context, resolved.width);
+}
+
 template <typename PaintItemCallback>
 void PaintRow(
 		Painter &p,
@@ -397,8 +413,9 @@ void PaintRow(
 		const HiddenSenderInfo *hiddenSenderInfo,
 		HistoryItem *item,
 		const Data::Draft *draft,
-		QDateTime date,
+		TimeId date,
 		const PaintContext &context,
+		const FakeRow *fakeRow,
 		BadgesState badgesState,
 		base::flags<Flag> flags,
 		PaintItemCallback &&paintItemCallback) {
@@ -410,6 +427,11 @@ void PaintRow(
 	const auto history = entry->asHistory();
 	const auto thread = entry->asThread();
 	const auto sublist = entry->asSublist();
+	const auto itemIsFiltered = item && FiltersController::filtered(item);
+	const auto itemIsEmpty = item && (item->isEmpty() || itemIsFiltered);
+	const auto showFilteredItem = !fakeRow
+		&& itemIsEmpty
+		&& itemIsFiltered;
 
 	auto bg = context.active
 		? st::dialogsBgActive
@@ -500,7 +522,9 @@ void PaintRow(
 		PaintExpandedTopicsBar(p, context.topicsExpanded);
 	}
 	if (context.narrow) {
-		if (!draft && item && !item->isEmpty()) {
+		if (!draft
+			&& item
+			&& (!itemIsEmpty || showFilteredItem)) {
 			PaintNarrowCounter(p, context, badgesState);
 		}
 		return;
@@ -592,8 +616,7 @@ void PaintRow(
 		|| (supportMode
 			&& entry->session().supportHelper().isOccupiedBySomeone(history))) {
 		if (!promoted) {
-			const auto dateString = Ui::FormatDialogsDate(date);
-			PaintRowTopRight(p, dateString, rectForName, context);
+			PaintDialogDate(p, entry, fakeRow, date, rectForName, context);
 		}
 
 		auto availableWidth = namewidth;
@@ -722,10 +745,9 @@ void PaintRow(
 				context.now)) {
 			// Empty history
 		}
-	} else if (!item->isEmpty()) {
+	} else if (!itemIsEmpty || showFilteredItem) {
 		if ((thread || sublist) && !promoted) {
-			const auto dateString = Ui::FormatDialogsDate(date);
-			PaintRowTopRight(p, dateString, rectForName, context);
+			PaintDialogDate(p, entry, fakeRow, date, rectForName, context);
 		}
 
 		paintItemCallback(nameleft, namewidth);
@@ -1072,18 +1094,10 @@ void RowPainter::Paint(
 		}
 		return nullptr;
 	}();
-	const auto displayDate = [&] {
-		if (item) {
-			if (cloudDraft) {
-				return (item->date() > cloudDraft->date)
-					? ItemDateTime(item)
-					: base::unixtime::parse(cloudDraft->date);
-			}
-			return ItemDateTime(item);
-		}
-		return cloudDraft
-			? base::unixtime::parse(cloudDraft->date)
-			: QDateTime();
+	const auto displayDate = [&]() -> TimeId {
+		const auto itemDate = item ? item->date() : TimeId(0);
+		const auto draftDate = cloudDraft ? cloudDraft->date : TimeId(0);
+		return std::max(itemDate, draftDate);
 	}();
 	const auto displayPinnedIcon = badgesState.empty()
 		&& entry->isPinnedDialog(context.filter)
@@ -1183,6 +1197,7 @@ void RowPainter::Paint(
 		cloudDraft,
 		displayDate,
 		context,
+		nullptr,
 		badgesState,
 		flags,
 		paintItemCallback);
@@ -1193,21 +1208,28 @@ void RowPainter::Paint(
 		not_null<const FakeRow*> row,
 		const PaintContext &context) {
 	const auto item = row->item();
+	const auto itemIsFiltered = FiltersController::filtered(item);
 	const auto topic = context.forum ? row->topic() : nullptr;
 	const auto history = topic ? nullptr : item->history().get();
 	const auto entry = topic ? (Entry*)topic : (Entry*)history;
 	auto cloudDraft = nullptr;
 	const auto from = [&] {
 		const auto in = row->searchInChat();
-		return (topic && (in.topic() != topic))
-			? nullptr
-			: in
-			? item->displayFrom()
-			: history->peer->migrateTo()
+		if (topic && (in.topic() != topic)) {
+			return (PeerData*)nullptr;
+		} else if (in && !itemIsFiltered) {
+			return item->displayFrom();
+		} else if (!history) {
+			return (PeerData*)nullptr;
+		}
+		return history->peer->migrateTo()
 			? history->peer->migrateTo()
 			: history->peer.get();
 	}();
 	const auto hiddenSenderInfo = [&]() -> const HiddenSenderInfo* {
+		if (itemIsFiltered) {
+			return nullptr;
+		}
 		if (const auto searchChat = row->searchInChat()) {
 			if (const auto peer = searchChat.peer()) {
 				if (const auto forwarded = item->Get<HistoryMessageForwarded>()) {
@@ -1292,8 +1314,9 @@ void RowPainter::Paint(
 		hiddenSenderInfo,
 		item,
 		cloudDraft,
-		ItemDateTime(item),
+		item->date(),
 		context,
+		row,
 		badgesState,
 		flags,
 		paintItemCallback);
