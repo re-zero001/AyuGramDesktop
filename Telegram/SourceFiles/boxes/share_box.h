@@ -116,6 +116,7 @@ public:
 		MessageIdsList msgIds,
 		std::optional<TimeId> videoTimestamp = {},
 		bool no_quote = false,
+		bool no_caption = false,
 		FnMut<void()>&& successCallback = nullptr);
 
 	struct Descriptor {

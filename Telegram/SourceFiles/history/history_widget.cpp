@@ -9767,7 +9767,7 @@ void HistoryWidget::forwardSelected() {
 		return;
 	}
 	const auto weak = base::make_weak(this);
-	Window::ShowNewForwardMessagesBox(controller(), getSelectedItems(), false, [=] {
+	Window::ShowNewForwardMessagesBox(controller(), getSelectedItems(), false, false, [=] {
 		if (const auto strong = weak.get()) {
 			strong->clearSelected();
 		}
@@ -9779,7 +9779,19 @@ void HistoryWidget::forwardNoQuoteSelected() {
 		return;
 	}
 	const auto weak = base::make_weak(this);
-	Window::ShowNewForwardMessagesBox(controller(), getSelectedItems(), true, [=] {
+	Window::ShowNewForwardMessagesBox(controller(), getSelectedItems(), true, false, [=] {
+		if (const auto strong = weak.get()) {
+			strong->clearSelected();
+		}
+	});
+}
+
+void HistoryWidget::forwardNoCaptionSelected() {
+	if (!_list) {
+		return;
+	}
+	const auto weak = base::make_weak(this);
+	Window::ShowNewForwardMessagesBox(controller(), getSelectedItems(), false, true, [=] {
 		if (const auto strong = weak.get()) {
 			strong->clearSelected();
 		}

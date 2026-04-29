@@ -1686,6 +1686,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 		MessageIdsList msgIds,
 		std::optional<TimeId> videoTimestamp,
 		bool no_quote,
+		bool no_caption,
 		FnMut<void()>&& successCallback) {
 	struct State final {
 		State(FnMut<void()>&& callback)
@@ -1724,8 +1725,10 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 
 		using Flag = MTPmessages_ForwardMessages::Flag;
 		auto commonSendFlags = MTPmessages_ForwardMessages::Flags(0);
-		if (no_quote) {
-			commonSendFlags = (options.scheduled ? Flag::f_schedule_date : Flag(0)) | Flag::f_drop_author;
+		if (no_quote || no_caption) {
+			commonSendFlags = (options.scheduled ? Flag::f_schedule_date : Flag(0))
+				| Flag::f_drop_author
+				| (no_caption ? Flag::f_drop_media_captions : Flag(0));
 		} else {
 			commonSendFlags = Flag(0)
 			| Flag::f_with_my_score
@@ -1765,6 +1768,10 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 			}
 		};
 
+		const auto effectiveForwardOptions = no_caption
+			? Data::ForwardOptions::NoNamesAndCaptions
+			: forwardOptions;
+
 		if (AyuForward::isFullAyuForwardNeeded(items.front())) {
 			crl::async([=]{
 				for (const auto thread : result) {
@@ -1772,7 +1779,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 					&history->owner().session(),
 					Api::SendAction(thread, options),
 					false,
-					Data::ResolvedForwardDraft(items, forwardOptions));
+					Data::ResolvedForwardDraft(items, effectiveForwardOptions));
 				}
 			});
 
@@ -1785,7 +1792,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 					AyuForward::intelligentForward(
 						&history->owner().session(),
 						Api::SendAction(thread, options),
-						Data::ResolvedForwardDraft(items, forwardOptions));
+						Data::ResolvedForwardDraft(items, effectiveForwardOptions));
 				}
 			});
 

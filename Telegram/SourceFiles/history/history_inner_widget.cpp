@@ -2569,7 +2569,13 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 	};
 
 	const auto collectForwardItemsForItem = [](
-			not_null<HistoryItem*> item) -> HistoryItemsList {
+			not_null<HistoryItem*> item,
+			bool asGroup = true) -> HistoryItemsList {
+		if (asGroup) {
+			if (const auto group = item->history()->owner().groups().find(item)) {
+				return HistoryItemsList(group->items.begin(), group->items.end());
+			}
+		}
 		HistoryItemsList items;
 		items.push_back(item);
 		return items;
@@ -3212,7 +3218,12 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				}
 				_menu->addAction(tr::ayu_ContextForwardSelectedNoQuote(tr::now), [=] {
 					_widget->forwardNoQuoteSelected();
-				}, &st::menuIconForward);
+				}, &st::menuIconUserHide);
+				if (ItemsForwardCaptionsCount(forwardSelectionItems) > 0) {
+					_menu->addAction(tr::ayu_ContextForwardSelectedNoCaption(tr::now), [=] {
+						_widget->forwardNoCaptionSelected();
+					}, &st::menuIconCaptionHide);
+				}
 			}
 			if (selectedState.count > 0 && selectedState.canDeleteCount == selectedState.count) {
 				_menu->addAction(tr::lng_context_delete_selected(tr::now), [=] {
@@ -3237,7 +3248,12 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				}
 				fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
 					forwardItemNoQuote(itemId);
-				}, &st::menuIconForward);
+				}, &st::menuIconUserHide);
+				if (ItemsForwardCaptionsCount(collectForwardItemsForItem(item, false)) > 0) {
+					fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoCaption(tr::now), [=] {
+						forwardItemNoCaption(itemId);
+					}, &st::menuIconCaptionHide);
+				}
 				fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 					if (item->id <= 0) return;
 					const auto api = &item->history()->peer->session().api();
@@ -3524,7 +3540,12 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				}
 				_menu->addAction(tr::ayu_ContextForwardSelectedNoQuote(tr::now), [=] {
 					_widget->forwardNoQuoteSelected();
-				}, &st::menuIconForward);
+				}, &st::menuIconUserHide);
+				if (ItemsForwardCaptionsCount(forwardSelectionItems) > 0) {
+					_menu->addAction(tr::ayu_ContextForwardSelectedNoCaption(tr::now), [=] {
+						_widget->forwardNoCaptionSelected();
+					}, &st::menuIconCaptionHide);
+				}
 			}
 			if (selectedState.count > 0 && selectedState.count == selectedState.canDeleteCount) {
 				_menu->addAction(tr::lng_context_delete_selected(tr::now), [=] {
@@ -3549,7 +3570,12 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 					}
 					fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
 						forwardAsGroupNoQuote(itemId);
-					}, &st::menuIconForward);
+					}, &st::menuIconUserHide);
+					if (ItemsForwardCaptionsCount(collectForwardItemsForItem(item)) > 0) {
+						fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoCaption(tr::now), [=] {
+							forwardAsGroupNoCaption(itemId);
+						}, &st::menuIconCaptionHide);
+					}
 					fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 						if (item->id <= 0) return;
 						const auto api = &item->history()->peer->session().api();
@@ -5523,7 +5549,7 @@ void HistoryInner::changeSelectionAsGroup(
 
 void HistoryInner::forwardItem(FullMsgId itemId) {
 	const auto weak = base::make_weak(this);
-	Window::ShowNewForwardMessagesBox(_controller, { 1, itemId }, false, [=] {
+	Window::ShowNewForwardMessagesBox(_controller, { 1, itemId }, false, false, [=] {
 		if (const auto strong = weak.get()) {
 			strong->clearSelected();
 		}
@@ -5537,6 +5563,7 @@ void HistoryInner::forwardAsGroup(FullMsgId itemId) {
 			_controller,
 			session().data().itemOrItsGroup(item),
 			false,
+			false,
 			[=] {
 				if (const auto strong = weak.get()) {
 					strong->clearSelected();
@@ -5547,7 +5574,7 @@ void HistoryInner::forwardAsGroup(FullMsgId itemId) {
 
 void HistoryInner::forwardItemNoQuote(FullMsgId itemId) {
 	const auto weak = base::make_weak(this);
-	Window::ShowNewForwardMessagesBox(_controller, { 1, itemId }, true, [=] {
+	Window::ShowNewForwardMessagesBox(_controller, { 1, itemId }, true, false, [=] {
 		if (const auto strong = weak.get()) {
 			strong->clearSelected();
 		}
@@ -5560,6 +5587,32 @@ void HistoryInner::forwardAsGroupNoQuote(FullMsgId itemId) {
 		Window::ShowNewForwardMessagesBox(
 			_controller,
 			session().data().itemOrItsGroup(item),
+			true,
+			false,
+			[=] {
+				if (const auto strong = weak.get()) {
+					strong->clearSelected();
+				}
+			});
+	}
+}
+
+void HistoryInner::forwardItemNoCaption(FullMsgId itemId) {
+	const auto weak = base::make_weak(this);
+	Window::ShowNewForwardMessagesBox(_controller, { 1, itemId }, false, true, [=] {
+		if (const auto strong = weak.get()) {
+			strong->clearSelected();
+		}
+	});
+}
+
+void HistoryInner::forwardAsGroupNoCaption(FullMsgId itemId) {
+	if (const auto item = session().data().message(itemId)) {
+		const auto weak = base::make_weak(this);
+		Window::ShowNewForwardMessagesBox(
+			_controller,
+			session().data().itemOrItsGroup(item),
+			false,
 			true,
 			[=] {
 				if (const auto strong = weak.get()) {

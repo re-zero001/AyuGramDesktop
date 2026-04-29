@@ -192,6 +192,7 @@ QPointer<Ui::BoxContent> ShowNewForwardMessagesBox(
 	not_null<Window::SessionNavigation*> navigation,
 	MessageIdsList &&items,
 	bool no_quote,
+	bool no_caption,
 	FnMut<void()>&& successCallback = nullptr);
 
 object_ptr<Ui::BoxContent> PrepareChooseRecipientBox(

@@ -2874,6 +2874,7 @@ QPointer<Ui::BoxContent> ShowNewForwardMessagesBox(
 		not_null<Window::SessionNavigation*> navigation,
 		MessageIdsList &&msgIds,
 		bool no_quote,
+		bool no_caption,
 		FnMut<void()>&& successCallback) {
 	const auto item = navigation->session().data().message(msgIds[0]);
 	const auto history = item->history();
@@ -2918,13 +2919,14 @@ QPointer<Ui::BoxContent> ShowNewForwardMessagesBox(
 		msgIds,
 		TimeId(0),
 		no_quote,
+		no_caption,
 		std::move(successCallback));
 
 	desc.filterCallback = std::move(filterCallback);
-	desc.titleOverride = no_quote ? tr::ayu_TitleForwardAsCopy() : tr::ayu_TitleMultipleForward();
+	desc.titleOverride = (no_quote || no_caption) ? tr::ayu_TitleForwardAsCopy() : tr::ayu_TitleMultipleForward();
 	desc.forwardOptions.sendersCount = ItemsForwardSendersCount(items);
 	desc.forwardOptions.captionsCount = ItemsForwardCaptionsCount(items);
-	desc.forwardOptions.show = !hasOnlyForcedForwardedInfo;
+	desc.forwardOptions.show = !hasOnlyForcedForwardedInfo && !no_caption;
 	desc.moneyRestrictionError = WriteMoneyRestrictionError;
 	
 	*weak = navigation->parentController()->show(Box<ShareBox>(std::move(desc)), Ui::LayerOption::CloseOther);

@@ -3305,7 +3305,7 @@ void OverlayWidget::forwardMedia() {
 		if (!_windowed) {
 			close();
 		}
-		Window::ShowNewForwardMessagesBox(active.front(), { 1, id }, false, []{});
+		Window::ShowNewForwardMessagesBox(active.front(), { 1, id }, false, false, []{});
 	}
 }
 

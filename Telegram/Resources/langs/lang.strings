@@ -8386,6 +8386,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_SelectedForwardNoQuote" = "Forward Without Quote";
 "ayu_SelectedNoQuote" = "Copy";
 "ayu_ContextForwardMsgNoQuote" = "Forward Without Quote";
+"ayu_ContextForwardMsgNoCaption" = "Forward Without Caption";
+"ayu_ContextForwardSelectedNoCaption" = "Forward Selected Without Caption";
 "ayu_ForwardToSavedMessage" = "Forward to Saved Messages";
 "ayu_TitleForwardAsCopy" = "Copy to...";
 "ayu_TitleMultipleForward" = "Forward to...";

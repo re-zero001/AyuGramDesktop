@@ -412,6 +412,8 @@
   "SelectedForwardNoQuote": "无引用转发",
   "SelectedNoQuote": "复制",
   "ContextForwardMsgNoQuote": "无引用转发",
+  "ContextForwardMsgNoCaption": "无描述转发",
+  "ContextForwardSelectedNoCaption": "无描述转发所选",
   "ForwardToSavedMessage": "转发到收藏夹",
   "TitleForwardAsCopy": "复制到...",
   "TitleMultipleForward": "转发到...",

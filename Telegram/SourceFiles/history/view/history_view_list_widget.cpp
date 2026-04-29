@@ -4735,7 +4735,7 @@ void ConfirmForwardSelectedItems(not_null<ListWidget*> widget) {
 	}
 	auto ids = widget->getSelectedIds();
 	const auto weak = base::make_weak(widget);
-	Window::ShowNewForwardMessagesBox(widget->controller(), std::move(ids), false, [=] {
+	Window::ShowNewForwardMessagesBox(widget->controller(), std::move(ids), false, false, [=] {
 		if (const auto strong = weak.get()) {
 			strong->cancelSelection();
 		}
@@ -4754,7 +4754,26 @@ void ConfirmForwardNoQuoteSelectedItems(not_null<ListWidget*> widget) {
 	}
 	auto ids = widget->getSelectedIds();
 	const auto weak = base::make_weak(widget);
-	Window::ShowNewForwardMessagesBox(widget->controller(), std::move(ids), true, [=] {
+	Window::ShowNewForwardMessagesBox(widget->controller(), std::move(ids), true, false, [=] {
+		if (const auto strong = weak.get()) {
+			strong->cancelSelection();
+		}
+	});
+}
+
+void ConfirmForwardNoCaptionSelectedItems(not_null<ListWidget*> widget) {
+	const auto items = widget->getSelectedItems();
+	if (items.empty()) {
+		return;
+	}
+	for (const auto &item : items) {
+		if (!item.canForward) {
+			return;
+		}
+	}
+	auto ids = widget->getSelectedIds();
+	const auto weak = base::make_weak(widget);
+	Window::ShowNewForwardMessagesBox(widget->controller(), std::move(ids), false, true, [=] {
 		if (const auto strong = weak.get()) {
 			strong->cancelSelection();
 		}

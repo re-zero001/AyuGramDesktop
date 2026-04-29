@@ -293,6 +293,7 @@ public:
 
 	void forwardSelected();
 	void forwardNoQuoteSelected();
+	void forwardNoCaptionSelected();
 	void confirmDeleteSelected();
 	void messageShotSelected();
 	void clearSelected();

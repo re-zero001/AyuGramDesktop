@@ -442,6 +442,8 @@ private:
 	void forwardAsGroup(FullMsgId itemId);
 	void forwardItemNoQuote(FullMsgId itemId);
 	void forwardAsGroupNoQuote(FullMsgId itemId);
+	void forwardItemNoCaption(FullMsgId itemId);
+	void forwardAsGroupNoCaption(FullMsgId itemId);
 	void deleteItem(not_null<HistoryItem*> item);
 	void deleteItem(FullMsgId itemId);
 	void deleteAsGroup(FullMsgId itemId);

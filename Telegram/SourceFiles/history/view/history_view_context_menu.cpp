@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history.h"
 #include "history/history_item.h"
 #include "history/history_item_components.h"
+#include "history/history_item_helpers.h"
 #include "history/history_item_text.h"
 #include "history/view/history_view_schedule_box.h"
 #include "history/view/media/history_view_media.h"
@@ -435,6 +436,11 @@ bool IsAyuForwardFromResolved(const Data::ResolvedForwardDraft &resolved) {
 	return AyuForward::isFullAyuForwardNeeded(resolved.items.front())
 		|| AyuForward::isAyuForwardNeeded(resolved.items);
 }
+
+bool HasCaptionsForItems(const std::vector<not_null<HistoryItem*>> &items) {
+	return ItemsForwardCaptionsCount(HistoryItemsList(items.begin(), items.end())) > 0;
+}
+
 } // namespace
 
 bool AddForwardSelectedAction(
@@ -457,6 +463,7 @@ bool AddForwardSelectedAction(
 				request.navigation,
 				ExtractIdsList(request.selectedItems),
 				false,
+				false,
 				[=] {
 					if (const auto strong = weak.get()) {
 						strong->cancelSelection();
@@ -470,12 +477,28 @@ bool AddForwardSelectedAction(
 				request.navigation,
 				ExtractIdsList(request.selectedItems),
 				true,
+				false,
 				[=] {
 					if (const auto strong = weak.get()) {
 						strong->cancelSelection();
 					}
 				});
-	}, &st::menuIconForward);
+	}, &st::menuIconUserHide);
+	if (HasCaptionsForItems(items)) {
+		menu->addAction(tr::ayu_ContextForwardSelectedNoCaption(tr::now), [=] {
+			const auto weak = base::make_weak(list);
+			Window::ShowNewForwardMessagesBox(
+					request.navigation,
+					ExtractIdsList(request.selectedItems),
+					false,
+					true,
+					[=] {
+						if (const auto strong = weak.get()) {
+							strong->cancelSelection();
+						}
+					});
+		}, &st::menuIconCaptionHide);
+	}
 	return true;
 }
 
@@ -510,7 +533,9 @@ bool AddForwardMessageAction(
 					request.navigation,
 					(asGroup
 						? owner->itemOrItsGroup(item)
-						: MessageIdsList{ 1, itemId }), false,
+						: MessageIdsList{ 1, itemId }),
+					false,
+					false,
 					[=] {
 						if (const auto strong = weak.get()) {
 							strong->cancelSelection();
@@ -528,13 +553,33 @@ bool AddForwardMessageAction(
 					 ? owner->itemOrItsGroup(item)
 					 : MessageIdsList{ 1, itemId }),
 					true,
+					false,
 					[=] {
 					if (const auto strong = weak.get()) {
 						strong->cancelSelection();
 					}
 				});
 		}
-	}, &st::menuIconForward);
+	}, &st::menuIconUserHide);
+	if (HasCaptionsForItems(items)) {
+		fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoCaption(tr::now), [=] {
+			if (const auto item = owner->message(itemId)) {
+				const auto weak = base::make_weak(list);
+				Window::ShowNewForwardMessagesBox(
+						request.navigation,
+						(asGroup
+						 ? owner->itemOrItsGroup(item)
+						 : MessageIdsList{ 1, itemId }),
+						false,
+						true,
+						[=] {
+						if (const auto strong = weak.get()) {
+							strong->cancelSelection();
+						}
+					});
+			}
+		}, &st::menuIconCaptionHide);
+	}
 	fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 		if (item->id <= 0) return;
 		const auto api = &item->history()->peer->session().api();
