@@ -337,6 +337,7 @@ public:
 	[[nodiscard]] bool hideAllChatsFolder() const { return _hideAllChatsFolder.current(); }
 	[[nodiscard]] ChannelBottomButton channelBottomButton() const { return _channelBottomButton.current(); }
 	[[nodiscard]] bool quickAdminShortcuts() const { return _quickAdminShortcuts.current(); }
+	[[nodiscard]] bool disableGreetingSticker() const { return _disableGreetingSticker.current(); }
 	[[nodiscard]] bool useQuickForwardMenu() const { return _useQuickForwardMenu.current(); }
 	[[nodiscard]] PeerIdDisplay showPeerId() const { return _showPeerId.current(); }
 	[[nodiscard]] bool showMessageSeconds() const { return _showMessageSeconds.current(); }
@@ -423,6 +424,7 @@ public:
 	void setHideAllChatsFolder(bool val);
 	void setChannelBottomButton(ChannelBottomButton val);
 	void setQuickAdminShortcuts(bool val);
+	void setDisableGreetingSticker(bool val);
 	void setUseQuickForwardMenu(bool val);
 	void setShowPeerId(PeerIdDisplay val);
 	void setShowMessageSeconds(bool val);
@@ -581,6 +583,8 @@ public:
 	[[nodiscard]] rpl::producer<ChannelBottomButton> channelBottomButtonChanges() const { return _channelBottomButton.changes(); }
 	[[nodiscard]] rpl::producer<bool> quickAdminShortcutsValue() const { return _quickAdminShortcuts.value(); }
 	[[nodiscard]] rpl::producer<bool> quickAdminShortcutsChanges() const { return _quickAdminShortcuts.changes(); }
+	[[nodiscard]] rpl::producer<bool> disableGreetingStickerValue() const { return _disableGreetingSticker.value(); }
+	[[nodiscard]] rpl::producer<bool> disableGreetingStickerChanges() const { return _disableGreetingSticker.changes(); }
 	[[nodiscard]] rpl::producer<bool> useQuickForwardMenuValue() const { return _useQuickForwardMenu.value(); }
 	[[nodiscard]] rpl::producer<bool> useQuickForwardMenuChanges() const { return _useQuickForwardMenu.changes(); }
 	[[nodiscard]] rpl::producer<PeerIdDisplay> showPeerIdValue() const { return _showPeerId.value(); }
@@ -691,6 +695,7 @@ private:
 	rpl::variable<bool> _hideAllChatsFolder = false;
 	rpl::variable<ChannelBottomButton> _channelBottomButton = ChannelBottomButton::DiscussWithFallback;
 	rpl::variable<bool> _quickAdminShortcuts = true;
+	rpl::variable<bool> _disableGreetingSticker = false;
 	rpl::variable<bool> _useQuickForwardMenu = false;
 	rpl::variable<PeerIdDisplay> _showPeerId = PeerIdDisplay::BotApi;
 	rpl::variable<bool> _showMessageSeconds = false;
