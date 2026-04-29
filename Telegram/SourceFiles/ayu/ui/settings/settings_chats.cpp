@@ -118,6 +118,12 @@ void BuildGroupsAndChannels(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.setter = &AyuSettings::setQuickAdminShortcuts,
 	});
 	ayu.addSettingToggle({
+		.id = u"ayu/useQuickForwardMenu"_q,
+		.title = tr::ayu_UseQuickForwardMenu(),
+		.getter = &AyuSettings::useQuickForwardMenu,
+		.setter = &AyuSettings::setUseQuickForwardMenu,
+	});
+	ayu.addSettingToggle({
 		.id = u"ayu/showMessageShot"_q,
 		.title = tr::ayu_SettingsShowMessageShot(),
 		.getter = &AyuSettings::showMessageShot,

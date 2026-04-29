@@ -131,6 +131,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/utils/telegram_helpers.h"
+#include "ayu/ayu_settings.h"
 #include "styles/style_ayu_icons.h"
 #include "ayu/ui/context_menu/context_menu.h"
 #include "ayu/features/forward/ayu_forward.h"
@@ -2876,6 +2877,13 @@ QPointer<Ui::BoxContent> ShowNewForwardMessagesBox(
 		bool no_quote,
 		bool no_caption,
 		FnMut<void()>&& successCallback) {
+	if (!AyuSettings::getInstance().useQuickForwardMenu()) {
+		auto shared = std::make_shared<FnMut<void()>>(std::move(successCallback));
+		ShowForwardMessagesBox(navigation, std::move(msgIds), [shared]() {
+			if (*shared) { (*shared)(); }
+		});
+		return nullptr;
+	}
 	const auto item = navigation->session().data().message(msgIds[0]);
 	const auto history = item->history();
 	const auto owner = &history->owner();

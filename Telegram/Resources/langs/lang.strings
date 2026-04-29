@@ -8050,6 +8050,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_HideReactionsInGroups" = "Groups";
 "ayu_HideReactionsInPrivateChats" = "Private Chats";
 "ayu_QuickAdminShortcuts" = "Quick Admin Shortcuts";
+"ayu_UseQuickForwardMenu" = "Use quick forward menu";
 "ayu_TranslationProvider" = "Translation Provider";
 "ayu_LinksHeader" = "Links";
 "ayu_LinksChannel" = "Channel";
