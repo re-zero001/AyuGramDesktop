@@ -8318,7 +8318,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_MessageShotShowDate" = "显示日期";
 "ayu_MessageShotShowReactions" = "显示表情回应菜单";
 "ayu_MessageShotShowHeaderDecorations" = "显示右上角标识";
-"ayu_MessageShotShowHeaderDecorations" = "Show header decorations";
 "ayu_MessageShotShowColorfulReplies" = "显示彩色回复";
 "ayu_MessageShotRevealSpoilers" = "显示剧透内容";
 "ayu_SendAsSticker" = "发送为贴纸";
