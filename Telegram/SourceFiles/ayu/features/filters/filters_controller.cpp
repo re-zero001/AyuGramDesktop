@@ -33,6 +33,13 @@ bool filterBlocked(const not_null<HistoryItem*> item) {
 			return true;
 		}
 	}
+	if (const auto forwarded = item->Get<HistoryMessageForwarded>()) {
+		if (const auto originalSender = forwarded->originalSender) {
+			if (isBlocked(not_null{ originalSender })) {
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
