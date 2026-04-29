@@ -242,6 +242,12 @@ void BuildQoLToggles(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.getter = &AyuSettings::showMessageSeconds,
 		.setter = &AyuSettings::setShowMessageSeconds,
 	});
+	ayu.addSettingToggle({
+		.id = u"ayu/showMessageId"_q,
+		.title = tr::ayu_SettingsShowMessageId(),
+		.getter = &AyuSettings::showMessageId,
+		.setter = &AyuSettings::setShowMessageId,
+	});
 
 	BuildShowPeerId(builder);
 

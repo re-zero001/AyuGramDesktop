@@ -514,6 +514,11 @@ void BottomInfo::layoutDateText() {
 			marked.append(' ');
 		}
 		marked.append(full);
+		if (settings.showMessageId()
+			&& !(_data.flags & Data::Flag::Sending)
+			&& _data.messageId.bare > 0) {
+			marked.append(u" | "_q + QString::number(_data.messageId.bare));
+		}
 		_authorEditedDate.setMarkedText(
 			st::msgDateTextStyle,
 			marked,
@@ -601,6 +606,11 @@ void BottomInfo::layoutDateText() {
 			})).append("  ");
 		}
 		marked.append(full);
+		if (settings.showMessageId()
+			&& !(_data.flags & Data::Flag::Sending)
+			&& _data.messageId.bare > 0) {
+			marked.append(u" | "_q + QString::number(_data.messageId.bare));
+		}
 
 		_authorEditedDate.setMarkedText(
 			st::msgDateTextStyle,
@@ -791,6 +801,7 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 	if (item->isBurnt()) {
 		result.flags |= Flag::AyuBurnt;
 	}
+	result.messageId = item->id;
 	if (!forwarded) {
 		return result;
 	}

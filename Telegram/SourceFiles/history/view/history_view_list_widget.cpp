@@ -92,6 +92,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtCore/QMimeData>
 
 // AyuGram includes
+#include "ayu/ayu_settings.h"
 #include "ayu/features/filters/filters_cache_controller.h"
 #include "ayu/utils/telegram_helpers.h"
 
@@ -505,7 +506,8 @@ ListWidget::ListWidget(
 		_session->changes().peerUpdates(
 			Data::PeerUpdate::Flag::IsBlocked
 		) | rpl::to_empty,
-		FiltersCacheController::updates()
+		FiltersCacheController::updates(),
+		AyuSettings::getInstance().showMessageIdChanges() | rpl::to_empty
 	) | rpl::on_next([=] {
 		crl::on_main(this, [=] {
 			if (_viewsCapacity.empty()) {

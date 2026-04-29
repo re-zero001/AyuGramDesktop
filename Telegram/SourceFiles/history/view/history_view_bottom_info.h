@@ -59,6 +59,7 @@ public:
 		std::optional<int> views;
 		std::optional<int> replies;
 		std::optional<int> forwardsCount;
+		MsgId messageId = 0;
 		Flags flags;
 	};
 	BottomInfo(not_null<::Data::Reactions*> reactionsOwner, Data &&data);

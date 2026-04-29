@@ -8350,6 +8350,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_LikelyOfflineStatus" = "offline ?";
 "ayu_GhostModeShortcut" = "Enter with Ghost";
 "ayu_SettingsShowMessageSeconds" = "Show Message Seconds";
+"ayu_SettingsShowMessageId" = "Show Message ID";
 "ayu_FilterZalgo" = "Filter Zalgo";
 "ayu_ImproveLinkPreviews" = "Improve Link Previews";
 "ayu_ShowOnlyAddedEmojisAndStickers" = "Show Only Added Emojis & Stickers";

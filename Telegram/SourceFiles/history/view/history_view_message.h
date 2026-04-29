@@ -434,6 +434,8 @@ private:
 	mutable uint32 _fromLinkRipplePointSet : 1 = 0;
 
 	BottomInfo _bottomInfo;
+	Ui::Animations::Simple _infoWidthAnimation;
+	int _infoWidthFrom = 0;
 	mutable QPoint _lastMediaPosition;
 
 };

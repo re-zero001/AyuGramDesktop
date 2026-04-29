@@ -981,6 +981,12 @@ void AyuSettings::setShowMessageSeconds(bool val) {
 	save();
 }
 
+void AyuSettings::setShowMessageId(bool val) {
+	if (_showMessageId.current() == val) return;
+	_showMessageId = val;
+	save();
+}
+
 void AyuSettings::setShowMessageShot(bool val) {
 	if (_showMessageShot.current() == val) return;
 	_showMessageShot = val;
@@ -1138,6 +1144,7 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"useQuickForwardMenu", s._useQuickForwardMenu.current()},
 		{"showPeerId", s._showPeerId.current()},
 		{"showMessageSeconds", s._showMessageSeconds.current()},
+		{"showMessageId", s._showMessageId.current()},
 		{"showMessageShot", s._showMessageShot.current()},
 		{"filterZalgo", s._filterZalgo.current()},
 		{"stickerConfirmation", s._stickerConfirmation.current()},
@@ -1239,6 +1246,7 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._useQuickForwardMenu = j.value("useQuickForwardMenu", defaults._useQuickForwardMenu.current());
 	s._showPeerId = j.value("showPeerId", defaults._showPeerId.current());
 	s._showMessageSeconds = j.value("showMessageSeconds", defaults._showMessageSeconds.current());
+	s._showMessageId = j.value("showMessageId", defaults._showMessageId.current());
 	s._showMessageShot = j.value("showMessageShot", defaults._showMessageShot.current());
 	s._filterZalgo = j.value("filterZalgo", defaults._filterZalgo.current());
 	s._stickerConfirmation = j.value("stickerConfirmation", defaults._stickerConfirmation.current());

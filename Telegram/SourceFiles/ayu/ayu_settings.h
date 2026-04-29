@@ -340,6 +340,7 @@ public:
 	[[nodiscard]] bool useQuickForwardMenu() const { return _useQuickForwardMenu.current(); }
 	[[nodiscard]] PeerIdDisplay showPeerId() const { return _showPeerId.current(); }
 	[[nodiscard]] bool showMessageSeconds() const { return _showMessageSeconds.current(); }
+	[[nodiscard]] bool showMessageId() const { return _showMessageId.current(); }
 	[[nodiscard]] bool showMessageShot() const { return _showMessageShot.current(); }
 	[[nodiscard]] bool filterZalgo() const { return _filterZalgo.current(); }
 	[[nodiscard]] bool stickerConfirmation() const { return _stickerConfirmation.current(); }
@@ -425,6 +426,7 @@ public:
 	void setUseQuickForwardMenu(bool val);
 	void setShowPeerId(PeerIdDisplay val);
 	void setShowMessageSeconds(bool val);
+	void setShowMessageId(bool val);
 	void setShowMessageShot(bool val);
 	void setFilterZalgo(bool val);
 	void setStickerConfirmation(bool val);
@@ -585,6 +587,8 @@ public:
 	[[nodiscard]] rpl::producer<PeerIdDisplay> showPeerIdChanges() const { return _showPeerId.changes(); }
 	[[nodiscard]] rpl::producer<bool> showMessageSecondsValue() const { return _showMessageSeconds.value(); }
 	[[nodiscard]] rpl::producer<bool> showMessageSecondsChanges() const { return _showMessageSeconds.changes(); }
+	[[nodiscard]] rpl::producer<bool> showMessageIdValue() const { return _showMessageId.value(); }
+	[[nodiscard]] rpl::producer<bool> showMessageIdChanges() const { return _showMessageId.changes(); }
 	[[nodiscard]] rpl::producer<bool> showMessageShotValue() const { return _showMessageShot.value(); }
 	[[nodiscard]] rpl::producer<bool> showMessageShotChanges() const { return _showMessageShot.changes(); }
 	[[nodiscard]] rpl::producer<bool> filterZalgoValue() const { return _filterZalgo.value(); }
@@ -690,6 +694,7 @@ private:
 	rpl::variable<bool> _useQuickForwardMenu = false;
 	rpl::variable<PeerIdDisplay> _showPeerId = PeerIdDisplay::BotApi;
 	rpl::variable<bool> _showMessageSeconds = false;
+	rpl::variable<bool> _showMessageId = false;
 	rpl::variable<bool> _showMessageShot = true;
 	rpl::variable<bool> _filterZalgo = false;
 	rpl::variable<bool> _stickerConfirmation = false;

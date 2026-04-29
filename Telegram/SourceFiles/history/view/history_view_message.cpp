@@ -4231,8 +4231,16 @@ void Message::validateFromNameText(PeerData *from) const {
 }
 
 bool Message::updateBottomInfo() {
+	const auto wasMaxWidth = _bottomInfo.maxWidth();
 	const auto wasInfo = _bottomInfo.currentSize();
 	_bottomInfo.update(BottomInfoDataFromMessage(this), width());
+	const auto newMaxWidth = _bottomInfo.maxWidth();
+	// Animate BottomInfo width growth (e.g. message ID appearing after send)
+	if (newMaxWidth > wasMaxWidth && wasMaxWidth > 0) {
+		_infoWidthFrom = wasMaxWidth;
+		_infoWidthAnimation.start(
+			[=] { repaint(); }, 0., 1., 150, anim::easeOutCubic);
+	}
 	return (_bottomInfo.currentSize() != wasInfo);
 }
 
@@ -5118,7 +5126,13 @@ QRect Message::countGeometry() const {
 	//} else if (!Adaptive::Wide() && !out() && !fromChannel() && st::msgPhotoSkip - (hmaxwidth - hwidth) > 0) {
 	//	contentLeft += st::msgPhotoSkip - (hmaxwidth - hwidth);
 	}
-	accumulate_min(contentWidth, maxWidth());
+	auto effectiveMaxWidth = maxWidth();
+	if (_infoWidthAnimation.animating()) {
+		const auto progress = _infoWidthAnimation.value(1.);
+		const auto infoWidthDiff = _bottomInfo.maxWidth() - _infoWidthFrom;
+		effectiveMaxWidth -= int((1. - progress) * infoWidthDiff);
+	}
+	accumulate_min(contentWidth, effectiveMaxWidth);
 	accumulate_min(contentWidth, int(_bubbleWidthLimit));
 	if (mediaWidth < contentWidth) {
 		const auto textualWidth = bubbleTextualWidth();

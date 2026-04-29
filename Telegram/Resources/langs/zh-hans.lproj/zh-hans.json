@@ -378,6 +378,7 @@
   "LikelyOfflineStatus": "离线 ?",
   "GhostModeShortcut": "以隐身模式进入",
   "SettingsShowMessageSeconds": "显示消息秒数",
+  "SettingsShowMessageId": "显示消息 ID",
   "FilterZalgo": "过滤 Zalgo 文本",
   "ImproveLinkPreviews": "改进链接预览",
   "ShowOnlyAddedEmojisAndStickers": "仅显示新增的表情和贴纸",
