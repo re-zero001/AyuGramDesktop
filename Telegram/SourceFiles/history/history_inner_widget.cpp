@@ -3210,7 +3210,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 						_widget->forwardSelected();
 					}, &st::menuIconForward);
 				}
-				_menu->addAction(tr::lng_context_forward_selected_no_quote(tr::now), [=] {
+				_menu->addAction(tr::ayu_ContextForwardSelectedNoQuote(tr::now), [=] {
 					_widget->forwardNoQuoteSelected();
 				}, &st::menuIconForward);
 			}
@@ -3235,10 +3235,10 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 					forwardItem(itemId);
 					}, &st::menuIconForward);
 				}
-				fwdSubmenu->addAction(tr::lng_context_forward_msg_no_quote(tr::now), [=] {
+				fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
 					forwardItemNoQuote(itemId);
 				}, &st::menuIconForward);
-				fwdSubmenu->addAction(tr::lng_forward_to_saved_message(tr::now), [=] {
+				fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 					if (item->id <= 0) return;
 					const auto api = &item->history()->peer->session().api();
 					auto action = Api::SendAction(item->history()->peer->owner().history(api->session().user()->asUser()));
@@ -3254,11 +3254,11 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 					});
 
 					if (isAyuForward) {
-						Ui::Toast::Show(tr::lng_title_forwarded(tr::now)); 
+						Ui::Toast::Show(tr::ayu_TitleForwarded(tr::now)); 
 					}
 				}, &st::menuIconFave);
 				if (!fwdSubmenu->empty()) {
-					_menu->addAction(tr::lng_context_forward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
+					_menu->addAction(tr::ayu_ContextForward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
 				}
 
 				AyuUi::AddRepeatMessageAction(
@@ -3522,7 +3522,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 						_widget->forwardSelected();
 					}, &st::menuIconForward);
 				}
-				_menu->addAction(tr::lng_context_forward_selected_no_quote(tr::now), [=] {
+				_menu->addAction(tr::ayu_ContextForwardSelectedNoQuote(tr::now), [=] {
 					_widget->forwardNoQuoteSelected();
 				}, &st::menuIconForward);
 			}
@@ -3547,10 +3547,10 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 							forwardItem(itemId);
 						}, &st::menuIconForward);
 					}
-					fwdSubmenu->addAction(tr::lng_context_forward_msg_no_quote(tr::now), [=] {
+					fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
 						forwardAsGroupNoQuote(itemId);
 					}, &st::menuIconForward);
-					fwdSubmenu->addAction(tr::lng_forward_to_saved_message(tr::now), [=] {
+					fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 						if (item->id <= 0) return;
 						const auto api = &item->history()->peer->session().api();
 						const auto history = item->history()->peer->owner().history(api->session().user()->asUser());
@@ -3565,11 +3565,11 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 						});
 
 						if (isAyuForward) {
-							Ui::Toast::Show(tr::lng_title_forwarded(tr::now)); 
+							Ui::Toast::Show(tr::ayu_TitleForwarded(tr::now)); 
 						}
 					}, &st::menuIconFave);
 					if (!fwdSubmenu->empty()) {
-						_menu->addAction(tr::lng_context_forward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
+						_menu->addAction(tr::ayu_ContextForward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
 					}
 				}
 

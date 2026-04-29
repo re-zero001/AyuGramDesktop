@@ -2921,7 +2921,7 @@ QPointer<Ui::BoxContent> ShowNewForwardMessagesBox(
 		std::move(successCallback));
 
 	desc.filterCallback = std::move(filterCallback);
-	desc.titleOverride = no_quote ? tr::lng_title_forward_as_copy() : tr::lng_title_multiple_forward();
+	desc.titleOverride = no_quote ? tr::ayu_TitleForwardAsCopy() : tr::ayu_TitleMultipleForward();
 	desc.forwardOptions.sendersCount = ItemsForwardSendersCount(items);
 	desc.forwardOptions.captionsCount = ItemsForwardCaptionsCount(items);
 	desc.forwardOptions.show = !hasOnlyForcedForwardedInfo;

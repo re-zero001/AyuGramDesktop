@@ -128,7 +128,7 @@ TopBarWidget::TopBarWidget(
 , _primaryWindow(controller->isPrimary())
 , _clear(this, tr::lng_selected_clear(), st::topBarClearButton)
 , _forward(this, tr::lng_selected_forward(), st::defaultActiveButton)
-, _noQuote(this, tr::lng_selected_no_quote(), st::defaultActiveButton)
+, _noQuote(this, tr::ayu_SelectedNoQuote(), st::defaultActiveButton)
 , _sendNow(this, tr::lng_selected_send_now(), st::defaultActiveButton)
 , _delete(this, tr::lng_selected_delete(), st::defaultActiveButton)
 , _messageShot(this, tr::ayu_MessageShotTopBarText(), st::defaultActiveButton)

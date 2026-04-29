@@ -464,7 +464,7 @@ bool AddForwardSelectedAction(
 				});
 		}, &st::menuIconForward);
 	}
-	menu->addAction(tr::lng_context_forward_selected_no_quote(tr::now), [=] {
+	menu->addAction(tr::ayu_ContextForwardSelectedNoQuote(tr::now), [=] {
 		const auto weak = base::make_weak(list);
 		Window::ShowNewForwardMessagesBox(
 				request.navigation,
@@ -519,7 +519,7 @@ bool AddForwardMessageAction(
 			}
 		}, &st::menuIconForward);
 	}
-	fwdSubmenu->addAction(tr::lng_context_forward_msg_no_quote(tr::now), [=] {
+	fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
 		if (const auto item = owner->message(itemId)) {
 			const auto weak = base::make_weak(list);
 			Window::ShowNewForwardMessagesBox(
@@ -535,7 +535,7 @@ bool AddForwardMessageAction(
 				});
 		}
 	}, &st::menuIconForward);
-	fwdSubmenu->addAction(tr::lng_forward_to_saved_message(tr::now), [=] {
+	fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
 		if (item->id <= 0) return;
 		const auto api = &item->history()->peer->session().api();
 		auto action = Api::SendAction(item->history()->peer->owner().history(api->session().user()->asUser()));
@@ -550,11 +550,11 @@ bool AddForwardMessageAction(
 		});
 
 		if (isAyuForward) {
-			Ui::Toast::Show(tr::lng_title_forwarded(tr::now)); 
+			Ui::Toast::Show(tr::ayu_TitleForwarded(tr::now)); 
 		}
 		}, &st::menuIconFave);
 	if (!fwdSubmenu->empty()) {
-		menu->addAction(tr::lng_context_forward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
+		menu->addAction(tr::ayu_ContextForward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
 	}
 	return true;
 }
