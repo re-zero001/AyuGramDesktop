@@ -2628,10 +2628,9 @@ void MainWidget::ensureThirdColumnResizeAreaCreated() {
 		if (!isThreeColumn() || !_thirdSection) {
 			return;
 		}
-		Core::App().settings().setThirdColumnWidth(std::clamp(
+		Core::App().settings().setThirdColumnWidth(std::max(
 			Core::App().settings().thirdColumnWidth(),
-			st::columnMinimalWidthThird,
-			st::columnMaximalWidthThird));
+			st::columnMinimalWidthThird));
 		Core::App().saveSettingsDelayed();
 	};
 	createResizeArea(
