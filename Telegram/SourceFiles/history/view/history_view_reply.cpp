@@ -35,6 +35,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/painter.h"
 #include "ui/power_saving.h"
 #include "window/window_session_controller.h"
+#include "ayu/features/filters/filters_controller.h"
 #include "styles/style_chat.h"
 #include "styles/style_dialogs.h"
 #include "styles/style_polls.h"
@@ -392,8 +393,10 @@ void Reply::update(
 		|| (externalMedia && externalMedia->hasReplyPreview())
 		|| (pollMediaPtr
 			&& (pollMediaPtr->photo || pollMediaPtr->document));
-	_hasPreview = hasPreview ? 1 : 0;
-	_displaying = data->displaying() ? 1 : 0;
+	const auto filtered = message
+		&& FiltersController::filtered(message);
+	_hasPreview = (hasPreview && !filtered) ? 1 : 0;
+	_displaying = (data->displaying() || filtered) ? 1 : 0;
 	_multiline = data->multiline() ? 1 : 0;
 	_replyToStory = (fields.storyId != 0);
 	_replyToPoll = (messagePoll && !pollAnswer) ? 1 : 0;
@@ -408,6 +411,8 @@ void Reply::update(
 		.repaint = repaint,
 	}));
 	const auto text = (!_displaying && data->unavailable())
+		? TextWithEntities()
+		: filtered
 		? TextWithEntities()
 		: task
 		? Ui::Text::Colorized(task->completionDate
@@ -645,22 +650,28 @@ void Reply::updateName(
 			- st::historyReplyPadding.left())
 		: 0;
 	auto nameFull = TextWithEntities();
-	if (displayAsExternal && !groupNameAdded && !fields.storyId) {
-		nameFull.append(PeerEmoji(sender));
-	}
-	nameFull.append(name);
-	if (groupNameAdded) {
-		nameFull.append(' ').append(PeerEmoji(externalPeer));
-		nameFull.append(externalPeer->name());
-	} else if (originalNameAdded) {
-		nameFull.append(' ').append(
-			st::historyReplyForward
-		).append(forwarded->originalSender
-			? forwarded->originalSender->name()
-			: forwarded->originalHiddenSenderInfo->name);
-	}
-	if (!viaBotUsername.isEmpty()) {
-		nameFull.append(u" @"_q).append(viaBotUsername);
+	const auto filtered = message
+		&& FiltersController::filtered(message);
+	if (filtered) {
+		nameFull.append(u"\U0001F47B"_q);
+	} else {
+		if (displayAsExternal && !groupNameAdded && !fields.storyId) {
+			nameFull.append(PeerEmoji(sender));
+		}
+		nameFull.append(name);
+		if (groupNameAdded) {
+			nameFull.append(' ').append(PeerEmoji(externalPeer));
+			nameFull.append(externalPeer->name());
+		} else if (originalNameAdded) {
+			nameFull.append(' ').append(
+				st::historyReplyForward
+			).append(forwarded->originalSender
+				? forwarded->originalSender->name()
+				: forwarded->originalHiddenSenderInfo->name);
+		}
+		if (!viaBotUsername.isEmpty()) {
+			nameFull.append(u" @"_q).append(viaBotUsername);
+		}
 	}
 	const auto context = Core::TextContext({
 		.session = &history->session(),
