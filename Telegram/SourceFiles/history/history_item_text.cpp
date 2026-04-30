@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "history/history_item.h"
 #include "history/history_item_components.h"
+#include "api/api_transcribes.h"
 #include "data/data_media_types.h"
 #include "data/data_web_page.h"
 #include "data/data_groups.h"
@@ -17,6 +18,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_options.h"
 
 TextForMimeData HistoryItemText(not_null<HistoryItem*> item) {
+	const auto &summary = item->summaryEntry();
+	if (!summary.result.empty() && summary.shown) {
+		return TextForMimeData::WithExpandedLinks(summary.result);
+	}
+
 	const auto media = item->media();
 
 	auto mediaResult = media ? media->clipboardText() : TextForMimeData();
