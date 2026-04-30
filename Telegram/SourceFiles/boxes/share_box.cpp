@@ -65,6 +65,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/features/forward/ayu_forward.h"
+#include "ayu/ayu_settings.h"
 
 
 class ShareBox::Inner final : public Ui::RpWidget {
@@ -1818,7 +1819,10 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 				return thread;
 			}();
 
-			if (!comment.text.isEmpty()) {
+			const auto sendCommentAfter = !comment.text.isEmpty()
+				&& AyuSettings::getInstance().sendForwardFirst();
+
+			if (!comment.text.isEmpty() && !sendCommentAfter) {
 				auto message = Api::MessageToSend(
 					Api::SendAction(effectiveThread, options));
 				message.textWithTags = comment;
@@ -1949,6 +1953,13 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 				[=](const MTPUpdates &updates,
 						const MTP::Response &) {
 					requestDone(updates, requestKey);
+					if (sendCommentAfter) {
+						auto message = Api::MessageToSend(
+							Api::SendAction(effectiveThread, options));
+						message.textWithTags = comment;
+						message.action.clearDraft = false;
+						threadHistory->session().api().sendMessage(std::move(message));
+					}
 				},
 				[=](const MTP::Error &error,
 						const MTP::Response &) {

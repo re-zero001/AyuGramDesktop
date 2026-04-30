@@ -130,6 +130,12 @@ void BuildGroupsAndChannels(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.setter = &AyuSettings::setUseQuickForwardMenu,
 	});
 	ayu.addSettingToggle({
+		.id = u"ayu/sendForwardFirst"_q,
+		.title = tr::ayu_SendForwardFirst(),
+		.getter = &AyuSettings::sendForwardFirst,
+		.setter = &AyuSettings::setSendForwardFirst,
+	});
+	ayu.addSettingToggle({
 		.id = u"ayu/showMessageShot"_q,
 		.title = tr::ayu_SettingsShowMessageShot(),
 		.getter = &AyuSettings::showMessageShot,

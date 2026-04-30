@@ -8052,6 +8052,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_QuickAdminShortcuts" = "Quick Admin Shortcuts";
 "ayu_DisableGreetingSticker" = "Disable Greeting Sticker";
 "ayu_UseQuickForwardMenu" = "Use quick forward menu";
+"ayu_SendForwardFirst" = "Send comment after forwarding";
 "ayu_TranslationProvider" = "Translation Provider";
 "ayu_LinksHeader" = "Links";
 "ayu_LinksChannel" = "Channel";

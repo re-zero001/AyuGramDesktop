@@ -80,6 +80,7 @@
   "QuickAdminShortcuts": "快捷管理方式",
   "DisableGreetingSticker": "禁用问候贴纸",
   "UseQuickForwardMenu": "使用快速转发菜单",
+  "SendForwardFirst": "转发后发送评论",
   "TranslationProvider": "翻译服务提供商",
   "LinksHeader": "链接",
   "LinksChannel": "频道",

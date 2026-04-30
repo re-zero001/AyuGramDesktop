@@ -975,6 +975,12 @@ void AyuSettings::setUseQuickForwardMenu(bool val) {
 	save();
 }
 
+void AyuSettings::setSendForwardFirst(bool val) {
+	if (_sendForwardFirst.current() == val) return;
+	_sendForwardFirst = val;
+	save();
+}
+
 void AyuSettings::setShowPeerId(PeerIdDisplay val) {
 	if (_showPeerId.current() == val) return;
 	_showPeerId = val;
@@ -1149,6 +1155,7 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"quickAdminShortcuts", s._quickAdminShortcuts.current()},
 		{"disableGreetingSticker", s._disableGreetingSticker.current()},
 		{"useQuickForwardMenu", s._useQuickForwardMenu.current()},
+		{"sendForwardFirst", s._sendForwardFirst.current()},
 		{"showPeerId", s._showPeerId.current()},
 		{"showMessageSeconds", s._showMessageSeconds.current()},
 		{"showMessageId", s._showMessageId.current()},
@@ -1252,6 +1259,7 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._quickAdminShortcuts = j.value("quickAdminShortcuts", defaults._quickAdminShortcuts.current());
 	s._disableGreetingSticker = j.value("disableGreetingSticker", defaults._disableGreetingSticker.current());
 	s._useQuickForwardMenu = j.value("useQuickForwardMenu", defaults._useQuickForwardMenu.current());
+	s._sendForwardFirst = j.value("sendForwardFirst", defaults._sendForwardFirst.current());
 	s._showPeerId = j.value("showPeerId", defaults._showPeerId.current());
 	s._showMessageSeconds = j.value("showMessageSeconds", defaults._showMessageSeconds.current());
 	s._showMessageId = j.value("showMessageId", defaults._showMessageId.current());

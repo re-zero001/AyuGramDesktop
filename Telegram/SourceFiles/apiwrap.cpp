@@ -4095,6 +4095,11 @@ void ApiWrap::sendMessage(
 	}
 	local().saveRecentSentHashtags(textWithTags.text);
 
+	const auto forwardFirst = AyuSettings::getInstance().sendForwardFirst();
+	if (forwardFirst) {
+		finishForwarding(action);
+	}
+
 	auto sending = TextWithEntities();
 	auto left = TextWithEntities {
 		textWithTags.text,
