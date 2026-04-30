@@ -395,6 +395,7 @@ void Reply::update(
 			&& (pollMediaPtr->photo || pollMediaPtr->document));
 	const auto filtered = message
 		&& FiltersController::filtered(message);
+	_filtered = filtered ? 1 : 0;
 	_hasPreview = (hasPreview && !filtered) ? 1 : 0;
 	_displaying = (data->displaying() || filtered) ? 1 : 0;
 	_multiline = data->multiline() ? 1 : 0;
@@ -812,13 +813,15 @@ void Reply::paint(
 	y += st::historyReplyTop;
 	const auto rect = QRect(x, y, w, _height);
 	const auto selected = context.selected();
-	const auto backgroundEmojiId = _colorPeer
+	const auto backgroundEmojiId = (_colorPeer && !_filtered)
 		? _colorPeer->backgroundEmojiId()
 		: DocumentId();
-	const auto colorIndexPlusOne = _colorPeer
+	const auto colorIndexPlusOne = _filtered
+		? 0
+		: _colorPeer
 		? (_colorPeer->colorIndex() + 1)
 		: _hiddenSenderColorIndexPlusOne;
-	const auto &colorCollectible = _colorPeer
+	const auto &colorCollectible = (_colorPeer && !_filtered)
 		? _colorPeer->colorCollectible()
 		: nullptr;
 	const auto useColorCollectible = colorCollectible && !context.outbg;
