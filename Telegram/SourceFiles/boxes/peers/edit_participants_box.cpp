@@ -45,6 +45,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_chat.h"
 #include "styles/style_menu_icons.h"
 
+#include <QtCore/QCoreApplication>
+
 namespace {
 
 // How many messages from chat history server should forward to user,
@@ -2045,13 +2047,28 @@ base::unique_qptr<Ui::PopupMenu> ParticipantsBoxController::rowContextMenu(
 				? &st::menuIconProfile
 				: &st::menuIconInfo));
 		if (user) {
+			const auto controller = _navigation->parentController();
+			const auto weak = base::make_weak(controller);
+			const auto history = _peer->owner().history(_peer);
 			result->addAction(
 				tr::ayu_UserMessagesMenuText(tr::now),
-				crl::guard(this, [=, this] {
-					_navigation->parentController()->searchInChat(
-						_peer->owner().history(_peer),
-						user);
-				}),
+				[=] {
+					InvokeQueued(QCoreApplication::instance(), [=] {
+						const auto strong = weak.get();
+						if (!strong) {
+							return;
+						}
+						strong->hideSpecialLayer(anim::type::instant);
+						strong->hideLayer(anim::type::instant);
+						strong->closeThirdSection();
+						strong->showPeerHistory(
+							history,
+							Window::SectionShow(
+								Window::SectionShow::Way::ClearStack,
+								anim::type::instant));
+						strong->searchInChat(history, user);
+					});
+				},
 				&st::menuIconTTL);
 		}
 	}
