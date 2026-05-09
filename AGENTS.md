@@ -616,6 +616,8 @@ void MyWidget::paintEvent(QPaintEvent *e) {
 
 Strings are defined in `Telegram/Resources/langs/lang.strings`:
 
+Keep `Telegram/Resources/langs/zh-hans.lproj/zh-hans.json` in sync when that key pattern is mirrored there.
+
 ```
 "lng_settings_title" = "Settings";
 "lng_confirm_delete_item" = "Are you sure you want to delete {item_name}?";
