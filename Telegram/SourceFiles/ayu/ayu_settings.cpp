@@ -539,6 +539,7 @@ void AyuSettings::validate() {
 		Ui::kBubbleRadiusSliderMax,
 		defaults._messageBubbleRadius);
 	validateRange(_wideMultiplier, 0.5, 4.0, defaults._wideMultiplier);
+	validateRange(_messageStickerScale, 0.5, 1.6, defaults._messageStickerScale);
 	validateRange(_stickerPanelScale, 1.0, 4.0, defaults._stickerPanelScale);
 	validateRange(_recentStickersCount, 1, 200, defaults._recentStickersCount);
 	validateRange(_avatarCorners, 0, AyuUiSettings::kMaxAvatarCorners, defaults._avatarCorners);
@@ -652,6 +653,12 @@ void AyuSettings::setWideMultiplier(double val) {
 	// doesn't work because it should be set before style::StartManager()
 	// AyuUiSettings::setWideMultiplier(val);
 	// repaintApp();
+	save();
+}
+
+void AyuSettings::setMessageStickerScale(double val) {
+	if (_messageStickerScale.current() == val) return;
+	_messageStickerScale = val;
 	save();
 }
 
@@ -1144,6 +1151,7 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"messageBubbleRadius", s._messageBubbleRadius.current()},
 		{"disableOpenLinkWarning", s._disableOpenLinkWarning.current()},
 		{"wideMultiplier", s._wideMultiplier.current()},
+		{"messageStickerScale", s._messageStickerScale.current()},
 		{"stickerPanelScale", s._stickerPanelScale.current()},
 		{"spoofWebviewAsAndroid", s._spoofWebviewAsAndroid.current()},
 		{"increaseWebviewHeight", s._increaseWebviewHeight.current()},
@@ -1252,6 +1260,7 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._messageBubbleRadius = j.value("messageBubbleRadius", defaults._messageBubbleRadius.current());
 	s._disableOpenLinkWarning = j.value("disableOpenLinkWarning", defaults._disableOpenLinkWarning.current());
 	s._wideMultiplier = j.value("wideMultiplier", defaults._wideMultiplier.current());
+	s._messageStickerScale = j.value("messageStickerScale", defaults._messageStickerScale.current());
 	s._stickerPanelScale = j.value("stickerPanelScale", defaults._stickerPanelScale.current());
 	s._spoofWebviewAsAndroid = j.value("spoofWebviewAsAndroid", defaults._spoofWebviewAsAndroid.current());
 	s._increaseWebviewHeight = j.value("increaseWebviewHeight", defaults._increaseWebviewHeight.current());

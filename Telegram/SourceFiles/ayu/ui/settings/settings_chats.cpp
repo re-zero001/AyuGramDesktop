@@ -81,11 +81,13 @@ void BuildStickersAndEmoji(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 void BuildRecentStickersLimit(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	auto *settings = &AyuSettings::getInstance();
 
-	constexpr auto kMinScale = 1.0;
-	constexpr auto kScaleStep = 0.1;
+	constexpr auto kMessageStickerMinScale = 0.5;
+	constexpr auto kMessageStickerScaleStep = 0.1;
+	constexpr auto kPanelMinScale = 1.0;
+	constexpr auto kPanelScaleStep = 0.1;
 
-	const auto scaleToIndex = [=](double value) {
-		return static_cast<int>(std::round((value - kMinScale) / kScaleStep));
+	const auto scaleToIndex = [](double value, double min, double step) {
+		return static_cast<int>(std::round((value - min) / step));
 	};
 
 	ayu.addSlider({
@@ -102,21 +104,52 @@ void BuildRecentStickersLimit(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	});
 
 	ayu.addSlider({
+		.id = u"ayu/messageStickerScale"_q,
+		.title = tr::ayu_StickerSizeScale(),
+		.steps = 12,
+		.current = scaleToIndex(
+			settings->messageStickerScale(),
+			kMessageStickerMinScale,
+			kMessageStickerScaleStep),
+		.indexToValue = [](int index) { return index; },
+		.onChanged = [=](int index) {
+			AyuSettings::getInstance().setMessageStickerScale(
+				kMessageStickerMinScale + index * kMessageStickerScaleStep);
+		},
+		.onFinalChanged = [=](int index) {
+			AyuSettings::getInstance().setMessageStickerScale(
+				kMessageStickerMinScale + index * kMessageStickerScaleStep);
+		},
+		.formatLabel = [=](int index) {
+			return QString::number(
+				kMessageStickerMinScale + index * kMessageStickerScaleStep,
+				'f',
+				1) + 'x';
+		},
+	});
+
+	ayu.addSlider({
 		.id = u"ayu/stickerPanelScale"_q,
 		.title = tr::ayu_StickerPanelScale(),
 		.steps = 31,
-		.current = scaleToIndex(settings->stickerPanelScale()),
+		.current = scaleToIndex(
+			settings->stickerPanelScale(),
+			kPanelMinScale,
+			kPanelScaleStep),
 		.indexToValue = [](int index) { return index; },
 		.onChanged = [=](int index) {
 			AyuSettings::getInstance().setStickerPanelScale(
-				kMinScale + index * kScaleStep);
+				kPanelMinScale + index * kPanelScaleStep);
 		},
 		.onFinalChanged = [=](int index) {
 			AyuSettings::getInstance().setStickerPanelScale(
-				kMinScale + index * kScaleStep);
+				kPanelMinScale + index * kPanelScaleStep);
 		},
 		.formatLabel = [=](int index) {
-			return QString::number(kMinScale + index * kScaleStep, 'f', 1)
+			return QString::number(
+				kPanelMinScale + index * kPanelScaleStep,
+				'f',
+				1)
 				+ 'x';
 		},
 	});

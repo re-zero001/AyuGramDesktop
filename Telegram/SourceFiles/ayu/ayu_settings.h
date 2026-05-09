@@ -284,6 +284,7 @@ public:
 	[[nodiscard]] int messageBubbleRadius() const { return _messageBubbleRadius.current(); }
 	[[nodiscard]] bool disableOpenLinkWarning() const { return _disableOpenLinkWarning.current(); }
 	[[nodiscard]] double wideMultiplier() const { return _wideMultiplier.current(); }
+	[[nodiscard]] double messageStickerScale() const { return _messageStickerScale.current(); }
 	[[nodiscard]] double stickerPanelScale() const { return _stickerPanelScale.current(); }
 	[[nodiscard]] bool spoofWebviewAsAndroid() const { return _spoofWebviewAsAndroid.current(); }
 	[[nodiscard]] bool increaseWebviewHeight() const { return _increaseWebviewHeight.current(); }
@@ -375,6 +376,7 @@ public:
 	void setMessageBubbleRadius(int val);
 	void setDisableOpenLinkWarning(bool val);
 	void setWideMultiplier(double val);
+	void setMessageStickerScale(double val);
 	void setStickerPanelScale(double val);
 	void setSpoofWebviewAsAndroid(bool val);
 	void setIncreaseWebviewHeight(bool val);
@@ -485,6 +487,8 @@ public:
 	[[nodiscard]] rpl::producer<bool> disableOpenLinkWarningChanges() const { return _disableOpenLinkWarning.changes(); }
 	[[nodiscard]] rpl::producer<double> wideMultiplierValue() const { return _wideMultiplier.value(); }
 	[[nodiscard]] rpl::producer<double> wideMultiplierChanges() const { return _wideMultiplier.changes(); }
+	[[nodiscard]] rpl::producer<double> messageStickerScaleValue() const { return _messageStickerScale.value(); }
+	[[nodiscard]] rpl::producer<double> messageStickerScaleChanges() const { return _messageStickerScale.changes(); }
 	[[nodiscard]] rpl::producer<double> stickerPanelScaleValue() const { return _stickerPanelScale.value(); }
 	[[nodiscard]] rpl::producer<double> stickerPanelScaleChanges() const { return _stickerPanelScale.changes(); }
 	[[nodiscard]] rpl::producer<bool> spoofWebviewAsAndroidValue() const { return _spoofWebviewAsAndroid.value(); }
@@ -657,6 +661,7 @@ private:
 	rpl::variable<int> _messageBubbleRadius;
 	rpl::variable<bool> _disableOpenLinkWarning = false;
 	rpl::variable<double> _wideMultiplier = 1.0;
+	rpl::variable<double> _messageStickerScale = 1.0;
 	rpl::variable<double> _stickerPanelScale = 1.0;
 	rpl::variable<bool> _spoofWebviewAsAndroid = false;
 	rpl::variable<bool> _increaseWebviewHeight = false;

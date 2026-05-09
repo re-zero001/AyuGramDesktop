@@ -157,6 +157,7 @@
   "MessageBubbleRadius": "消息气泡圆角",
   "SettingsWideMultiplier": "扩展消息宽度",
   "SettingsWideMultiplierDescription": "你可以调整消息宽度，以在超宽显示器上获得更好的显示效果。",
+  "StickerSizeScale": "贴纸大小缩放",
   "StickerPanelScale": "贴纸面板缩放",
   "PinnedBarHidden": "置顶消息已隐藏，点击可重新显示。",
   "ShowPinnedMessages": "显示置顶消息",
