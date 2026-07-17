@@ -96,6 +96,7 @@ constexpr auto kFullLineAppearFinalDuration = crl::time(120);
 constexpr auto kLineHeightAppearDuration = crl::time(100);
 constexpr auto kLineHeightAppearFinalDuration = crl::time(60);
 constexpr auto kMinWidthAppearDuration = crl::time(160);
+constexpr auto kInfoWidthAnimationDuration = crl::time(150);
 
 [[nodiscard]] int RevealLineRight(const Ui::Text::LineLayoutInfo &line) {
 	return line.left + line.width;
@@ -5419,7 +5420,11 @@ bool Message::updateBottomInfo() {
 	if (newMaxWidth > wasMaxWidth && wasMaxWidth > 0) {
 		_infoWidthFrom = wasMaxWidth;
 		_infoWidthAnimation.start(
-			[=] { repaint(); }, 0., 1., 150, anim::easeOutCubic);
+			[=] { repaint(); },
+			0.,
+			1.,
+			kInfoWidthAnimationDuration,
+			anim::easeOutCubic);
 	}
 	return (_bottomInfo.currentSize() != wasInfo);
 }
