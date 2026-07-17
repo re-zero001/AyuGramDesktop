@@ -433,14 +433,6 @@ bool IsAyuForwardForItems(const std::vector<not_null<HistoryItem*>> &items) {
 	return AyuForward::isAyuForwardNeeded(items);
 }
 
-bool IsAyuForwardFromResolved(const Data::ResolvedForwardDraft &resolved) {
-	if (resolved.items.empty()) {
-		return false;
-	}
-	return AyuForward::isFullAyuForwardNeeded(resolved.items.front())
-		|| AyuForward::isAyuForwardNeeded(resolved.items);
-}
-
 bool HasCaptionsForItems(const std::vector<not_null<HistoryItem*>> &items) {
 	return ItemsForwardCaptionsCount(HistoryItemsList(items.begin(), items.end())) > 0;
 }
@@ -584,24 +576,27 @@ bool AddForwardMessageAction(
 			}
 		}, &st::menuIconCaptionHide);
 	}
-	fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [=] {
-		if (item->id <= 0) return;
-		const auto api = &item->history()->peer->session().api();
-		auto action = Api::SendAction(item->history()->peer->owner().history(api->session().user()->asUser()));
-		action.clearDraft = false;
-		action.generateLocal = false;
-
-		const auto history = item->history()->peer->owner().history(api->session().user()->asUser());
-		auto resolved = history->resolveForwardDraft(Data::ForwardDraft{ .ids = MessageIdsList(1, itemId) });
-		const bool isAyuForward = IsAyuForwardFromResolved(resolved);
-		api->forwardMessages(std::move(resolved), action, [] {
-			Ui::Toast::Show(tr::lng_share_done(tr::now));
-		});
-
-		if (isAyuForward) {
-			Ui::Toast::Show(tr::ayu_TitleForwarded(tr::now)); 
-		}
-		}, &st::menuIconFave);
+	fwdSubmenu->addAction(
+		tr::ayu_ForwardToSavedMessage(tr::now),
+		[owner, itemId] {
+			const auto item = owner->message(itemId);
+			if (!item || !IsServerMsgId(item->id)) {
+				return;
+			}
+			const auto api = &item->history()->peer->session().api();
+			const auto history = owner->history(
+				api->session().user()->asUser());
+			auto action = Api::SendAction(history);
+			action.clearDraft = false;
+			action.generateLocal = false;
+			auto resolved = history->resolveForwardDraft(Data::ForwardDraft{
+				.ids = MessageIdsList(1, itemId),
+			});
+			api->forwardMessages(std::move(resolved), action, [] {
+				Ui::Toast::Show(tr::lng_share_done(tr::now));
+			});
+		},
+		&st::menuIconFave);
 	if (!fwdSubmenu->empty()) {
 		menu->addAction(tr::ayu_ContextForward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
 	}
