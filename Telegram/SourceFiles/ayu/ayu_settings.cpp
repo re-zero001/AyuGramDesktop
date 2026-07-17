@@ -6,12 +6,10 @@
 // Copyright @Radolyn, 2026
 #include "ayu/ayu_settings.h"
 
-#include "lang_auto.h"
-#include "tray.h"
+#include "ayu/ui/ayu_logo.h"
 #include "ayu/ayu_ui_settings.h"
 #include "ayu/ayu_worker.h"
 #include "ayu/features/streamer_mode/streamer_mode.h"
-#include "ayu/ui/ayu_logo.h"
 #include "core/application.h"
 #include "features/filters/filters_cache_controller.h"
 #include "features/translator/ayu_translator.h"
@@ -19,10 +17,13 @@
 #include "main/main_session.h"
 #include "platform/platform_translate_provider.h"
 #include "rpl/combine.h"
+#include "ui/chat/chat_style_radius.h"
 #include "window/window_controller.h"
+#include "lang_auto.h"
+#include "tray.h"
 
-#include <fstream>
 #include <QApplication>
+#include <fstream>
 
 using json = nlohmann::json;
 
@@ -355,7 +356,8 @@ void from_json(const nlohmann::json &j, MessageShotSettings &s) {
 }
 
 AyuSettings::AyuSettings()
-: _appIcon(AyuAssets::DEFAULT_ICON)
+: _messageBubbleRadius(Ui::kBubbleRadiusSliderMax)
+, _appIcon(AyuAssets::DEFAULT_ICON)
 , _editedMark(Core::IsAppLaunched() ? tr::lng_edited(tr::now) : QString("edited")) {
 }
 
@@ -365,17 +367,23 @@ AyuSettings &AyuSettings::getInstance() {
 }
 
 void AyuSettings::load() {
+	auto &settings = getInstance();
 	std::ifstream file(getSettingsPath());
 	if (!file.good()) {
+		if (Ui::TakeLegacySmallBubbleRadius()) {
+			settings._messageBubbleRadius = Ui::kBubbleRadiusSliderMidpoint;
+			settings.validate();
+			save();
+		}
 		return;
 	}
 
-	auto &settings = getInstance();
-
+	auto hasBubbleRadius = false;
 	try {
 		json p;
 		file >> p;
 		file.close();
+		hasBubbleRadius = p.contains("messageBubbleRadius");
 
 		if (!p.contains("ghostModeSettings")) {
 			p["ghostModeSettings"] = nlohmann::json::object({
@@ -404,6 +412,13 @@ void AyuSettings::load() {
 		LOG(("AyuGramSettings: failed to read settings file (not json-like)"));
 	}
 
+	const auto legacySmallBubbleRadius = Ui::TakeLegacySmallBubbleRadius();
+	const auto migrateBubbleRadius = !hasBubbleRadius
+		&& legacySmallBubbleRadius;
+	if (migrateBubbleRadius) {
+		settings._messageBubbleRadius = Ui::kBubbleRadiusSliderMidpoint;
+	}
+
 	if (cGhost()) {
 		auto &ghost = AyuSettings::ghost();
 		ghost._sendReadMessages = false;
@@ -414,6 +429,9 @@ void AyuSettings::load() {
 	}
 
 	settings.validate();
+	if (migrateBubbleRadius) {
+		save();
+	}
 }
 
 void AyuSettings::save() {
@@ -515,7 +533,11 @@ void AyuSettings::validate() {
 		modified = true;
 	}
 
-	validateRange(_messageBubbleRadius, 0, 16, defaults._messageBubbleRadius);
+	validateRange(
+		_messageBubbleRadius,
+		Ui::kBubbleRadiusSliderMin,
+		Ui::kBubbleRadiusSliderMax,
+		defaults._messageBubbleRadius);
 	validateRange(_wideMultiplier, 0.5, 4.0, defaults._wideMultiplier);
 	validateRange(_stickerPanelScale, 1.0, 4.0, defaults._stickerPanelScale);
 	validateRange(_recentStickersCount, 1, 200, defaults._recentStickersCount);

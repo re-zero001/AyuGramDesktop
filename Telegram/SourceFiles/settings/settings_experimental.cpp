@@ -155,8 +155,6 @@ struct ResolvedReferrer {
 		return u"ayu/showEmojiPopup"_q;
 	} else if (id == u"show-peer-id-below-about"_q) {
 		return u"ayu/showPeerId"_q;
-	} else if (id == u"use-small-msg-bubble-radius"_q) {
-		return u"ayu/messageBubbleRadius"_q;
 	} else if (id == u"unlimited-recent-stickers"_q) {
 		return u"ayu/unlimitedRecentStickers"_q;
 	} else if (id == u"hide-ai-button"_q) {

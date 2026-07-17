@@ -23,8 +23,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ayu/ayu_settings.h"
 #include "styles/style_ayu_icons.h"
 
-
 namespace Ui {
+
 namespace {
 
 void EnsureCorners(
@@ -32,7 +32,7 @@ void EnsureCorners(
 		int radius,
 		const style::color &color,
 		const style::color *shadow = nullptr) {
-	if (corners.p[0].isNull()) {
+	if (corners.radius != radius) {
 		corners = PrepareCornerPixmaps(radius, color, shadow);
 	}
 }
