@@ -2480,6 +2480,8 @@ void ComposeControls::init() {
 		AyuSettings::getInstance().showAutoDeleteButtonInMessageFieldChanges() | rpl::to_empty,
 		session().data().aiComposeTones().updated() | rpl::to_empty,
 		AyuSettings::getInstance().showAiEditorButtonInMessageFieldChanges() | rpl::to_empty,
+		base::options::lookup<bool>(Ui::kOptionHideAiButton).changes(),
+		session().data().aiComposeTones().updated(),
 		AyuSettings::getInstance().showAttachPopupChanges() | rpl::to_empty,
 		AyuSettings::getInstance().showEmojiPopupChanges() | rpl::to_empty,
 		AyuSettings::getInstance().channelBottomButtonChanges() | rpl::to_empty,

@@ -40,7 +40,8 @@ base::options::toggle HideAiButtonOption({
 bool HasEnoughLinesForAi(
 		not_null<Main::Session*> session,
 		not_null<Ui::InputField*> field) {
-	if (!AyuSettings::getInstance().showAiEditorButtonInMessageField()
+	if (HideAiButtonOption.value()
+		|| !AyuSettings::getInstance().showAiEditorButtonInMessageField()
 		|| session->data().aiComposeTones().list().empty()) {
 		return false;
 	}
@@ -207,9 +208,10 @@ auto SetupCaptionAiButton(SetupCaptionAiButtonArgs &&args)
 		field->heightChanges() | rpl::to_empty,
 		field->changes() | rpl::to_empty,
 		field->shownValue() | rpl::to_empty,
-		session->data().aiComposeTones().updated() | rpl::to_empty,
+		HideAiButtonOption.changes(),
 		AyuSettings::getInstance().showAiEditorButtonInMessageFieldChanges()
-			| rpl::to_empty
+			| rpl::to_empty,
+		session->data().aiComposeTones().updated() | rpl::to_empty
 	) | rpl::on_next([=] {
 		updateVisibility();
 	}, button->lifetime());
