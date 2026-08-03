@@ -33,6 +33,11 @@ constexpr auto postfixes = {
 	"other"
 };
 
+[[nodiscard]] QString MappedLanguageId(const QString &id) {
+	const auto i = langMapping.find(id);
+	return (i != langMapping.end()) ? i->second : id;
+}
+
 AyuLanguage *AyuLanguage::instance = nullptr;
 
 AyuLanguage::AyuLanguage() = default;
@@ -49,6 +54,19 @@ AyuLanguage *AyuLanguage::currentInstance() {
 	return instance;
 }
 
+bool AyuLanguage::ShouldUseBundledLanguage(
+		const QString &id,
+		const QString &baseId) {
+	const auto mappedId = MappedLanguageId(id);
+	if (mappedId == u"zh-hans"_q) {
+		return true;
+	}
+	if (mappedId == u"zh-hant"_q) {
+		return false;
+	}
+	return MappedLanguageId(baseId) == u"zh-hans"_q;
+}
+
 QString AyuLanguage::getCacheDir() const {
 	return cWorkingDir() + u"tdata/ayu/languages/"_q;
 }
@@ -58,17 +76,10 @@ QString AyuLanguage::getCachePath(const QString &langId) const {
 }
 
 bool AyuLanguage::loadBundledLanguage() {
-	auto langId = Lang::GetInstance().id();
+	const auto langId = Lang::GetInstance().id();
 	const auto baseId = Lang::GetInstance().baseId();
 
-	if (langMapping.contains(langId)) {
-		langId = langMapping[langId];
-	}
-	if (langId.isEmpty()) {
-		langId = baseId;
-	}
-
-	if (!langId.startsWith(u"zh"_q) && !baseId.startsWith(u"zh"_q)) {
+	if (!ShouldUseBundledLanguage(langId, baseId)) {
 		return false;
 	}
 

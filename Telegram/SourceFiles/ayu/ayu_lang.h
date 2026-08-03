@@ -17,6 +17,9 @@ class AyuLanguage : public QObject
 public:
 	static AyuLanguage *currentInstance();
 	static void init();
+	[[nodiscard]] static bool ShouldUseBundledLanguage(
+		const QString &id,
+		const QString &baseId);
 	static AyuLanguage *instance;
 
 	void fetchLanguage(const QString &id, const QString &baseId);

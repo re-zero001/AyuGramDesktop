@@ -31,7 +31,7 @@ void initLang() {
 		return;
 	}
 	AyuLanguage::init();
-	if (!id.startsWith(u"zh"_q) && !baseId.startsWith(u"zh"_q)) {
+	if (!AyuLanguage::ShouldUseBundledLanguage(id, baseId)) {
 		AyuLanguage::currentInstance()->fetchLanguage(id, baseId);
 	}
 }
