@@ -3831,6 +3831,8 @@ void ApiWrap::forwardMessages(
 		FnMut<void()> &&successCallback) {
 	Expects(!draft.items.empty());
 
+	applyGhostScheduling(_session, action.options);
+
 	const auto fullAyuForward = AyuForward::isFullAyuForwardNeeded(draft.items.front());
 	if (fullAyuForward) {
 		crl::async([=] {
