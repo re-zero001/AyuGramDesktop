@@ -34,7 +34,7 @@ namespace Storage {
 } // namespace Storage
 
 namespace Ui {
-class ScrollArea;
+class ElasticScroll;
 class PlainShadow;
 class FlatButton;
 class PinnedBar;
@@ -50,6 +50,10 @@ class BackButton;
 namespace InlineBots {
 class Result;
 } // namespace InlineBots
+
+namespace Iv {
+struct RichPage;
+} // namespace Iv
 
 namespace Data {
 class RepliesList;
@@ -73,6 +77,7 @@ class StickerToast;
 class TopicReopenBar;
 class EmptyPainter;
 class PinnedTracker;
+class PullToNextChannel;
 class TranslateBar;
 class SubsectionTabs;
 class SelfForwardsTagger;
@@ -208,6 +213,7 @@ public:
 		Ui::ChatPaintContextArgs &&args) override;
 	base::unique_qptr<Ui::PopupMenu> listFillSenderUserpicMenu(
 		PeerId userpicPeerId) override;
+	Ui::ElasticScroll *listScrollArea() const override;
 
 	// CornerButtonsDelegate delegate.
 	void cornerButtonsShowAtPosition(
@@ -300,6 +306,12 @@ private:
 		bool useCurrentWebPageDraft,
 		Api::SendOptions options,
 		Fn<void()> done);
+	void sendRichDraft(
+		std::shared_ptr<const Iv::RichPage> page,
+		Api::SendOptions options);
+	void sendRichDraftWithoutFormatting(
+		std::shared_ptr<const Iv::RichPage> page,
+		Api::SendOptions options);
 	void sendWithTextOverride(
 		TextWithEntities text,
 		Api::SendOptions options,
@@ -313,7 +325,8 @@ private:
 		mtpRequestId *const saveEditMsgRequestId,
 		bool spoilered);
 	void chooseAttach(std::optional<bool> overrideSendImagesAsPhotos);
-	[[nodiscard]] SendMenu::Details sendMenuDetails() const;
+	[[nodiscard]] SendMenu::Details sendMenuDetails() const override;
+	bool processChosenSticker(ChatHelpers::FileChosen &&chosen) override;
 	[[nodiscard]] FullReplyTo replyTo() const;
 	[[nodiscard]] HistoryItem *lookupRepliesRoot() const;
 	[[nodiscard]] Data::ForumTopic *lookupTopic();
@@ -383,6 +396,7 @@ private:
 		std::optional<MsgId> localMessageId);
 
 	void validateSubsectionTabs() override;
+	void updateSubsectionTabsGeometry();
 	void setupEmptyPainter();
 	void refreshJoinGroupButton();
 	[[nodiscard]] bool emptyShown() const;
@@ -420,6 +434,7 @@ private:
 	std::unique_ptr<SubsectionTabs> _subsectionTabs;
 	rpl::lifetime _subsectionTabsLifetime;
 	rpl::lifetime _subsectionCheckLifetime;
+	rpl::lifetime _subsectionTopicsLifetime;
 	bool _canSendTexts = false;
 	bool _skipScrollEvent = false;
 	bool _synteticScrollEvent = false;
@@ -433,6 +448,7 @@ private:
 	int _pinnedBarHeight = 0;
 	FullMsgId _pinnedClickedId;
 	std::optional<FullMsgId> _minPinnedId;
+	bool _pinnedBarHasCustomButton = false;
 	HistoryItem *_shownPinnedItem = nullptr;
 
 	std::unique_ptr<Ui::PinnedBar> _repliesRootView;
@@ -441,7 +457,8 @@ private:
 	bool _repliesRootViewInitScheduled = false;
 	rpl::variable<bool> _repliesRootVisible = false;
 
-	std::unique_ptr<Ui::ScrollArea> _scroll;
+	std::unique_ptr<Ui::ElasticScroll> _scroll;
+	std::unique_ptr<PullToNextChannel> _pullToNext;
 	std::unique_ptr<HistoryView::StickerToast> _stickerToast;
 
 	FullMsgId _lastShownAt;
