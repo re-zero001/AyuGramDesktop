@@ -827,7 +827,7 @@ void AddRepeatMessageAction(
 			const auto replyTo = item->replyTo();
 			const auto hasReply = (replyTo.messageId.msg != 0);
 			const auto useNoQuote = shiftPressed || (inRepliesView && !history->peer->isForum());
-			const auto useReply = inRepliesView ? hasReply : (hasReply && shiftPressed);
+			const auto preserveReply = inRepliesView ? hasReply : (hasReply && shiftPressed);
 
 			const auto sendAs = (peer->isUser() || peer->isChat() || history->peer->isMonoforum())
 				? nullptr
@@ -852,7 +852,7 @@ void AddRepeatMessageAction(
 				action.replyTo.topicRootId = currentItem->topicRootId();
 			}
 
-			if (useReply) {
+			if (preserveReply) {
 				action.replyTo.messageId = replyTo.messageId;
 			}
 
