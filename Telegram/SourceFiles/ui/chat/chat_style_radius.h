@@ -34,4 +34,6 @@ void SetAppliedBubbleRadius(int value);
 [[nodiscard]] int MsgFileThumbRadiusLarge();
 [[nodiscard]] bool TakeLegacySmallBubbleRadius();
 
+extern const char kOptionUseSmallMsgBubbleRadius[];
+
 } // namespace Ui

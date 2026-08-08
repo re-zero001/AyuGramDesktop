@@ -20,24 +20,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_item_preview.h"
 #include "history/history_item.h"
 #include "history/history_item_components.h"
-#include "api/api_transcribes.h"
-#include "data/data_media_types.h"
-#include "data/data_web_page.h"
-#include "data/data_groups.h"
-#include "data/data_peer.h"
+#include "history/history_item_helpers.h"
 #include "lang/lang_keys.h"
 #include "ui/text/text.h"
 #include "ui/text/text_entity.h"
 #include "ui/text/text_options.h"
 #include "ui/text/text_utilities.h"
 
-TextForMimeData HistoryItemText(not_null<HistoryItem*> item) {
-	const auto &summary = item->summaryEntry();
-	if (!summary.result.empty() && summary.shown) {
-		return TextForMimeData::WithExpandedLinks(summary.result);
-	}
-
-	const auto media = item->media();
+// AyuGram includes
+#include "api/api_transcribes.h"
 
 
 namespace {

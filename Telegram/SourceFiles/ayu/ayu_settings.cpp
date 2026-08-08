@@ -778,6 +778,12 @@ void AyuSettings::setUnlimitedRecentStickers(bool val) {
 	save();
 }
 
+void AyuSettings::setRecentStickersCount(int val) {
+	if (_recentStickersCount.current() == val) return;
+	_recentStickersCount = val;
+	save();
+}
+
 void AyuSettings::setShowReactionsPanelInContextMenu(ContextMenuVisibility val) {
 	if (_showReactionsPanelInContextMenu.current() == val) return;
 	_showReactionsPanelInContextMenu = val;
@@ -1170,6 +1176,7 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"deletedMark", s._deletedMark.current()},
 		{"editedMark", s._editedMark.current()},
 		{"unlimitedRecentStickers", s._unlimitedRecentStickers.current()},
+		{"recentStickersCount", s._recentStickersCount.current()},
 		{"showReactionsPanelInContextMenu", s._showReactionsPanelInContextMenu.current()},
 		{"showViewsPanelInContextMenu", s._showViewsPanelInContextMenu.current()},
 		{"showHideMessageInContextMenu", s._showHideMessageInContextMenu.current()},
@@ -1279,6 +1286,7 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._deletedMark = j.value("deletedMark", defaults._deletedMark.current());
 	s._editedMark = j.value("editedMark", defaults._editedMark.current());
 	s._unlimitedRecentStickers = j.value("unlimitedRecentStickers", defaults._unlimitedRecentStickers.current());
+	s._recentStickersCount = j.value("recentStickersCount", defaults._recentStickersCount.current());
 	s._showReactionsPanelInContextMenu = j.value("showReactionsPanelInContextMenu", defaults._showReactionsPanelInContextMenu.current());
 	s._showViewsPanelInContextMenu = j.value("showViewsPanelInContextMenu", defaults._showViewsPanelInContextMenu.current());
 	s._showHideMessageInContextMenu = j.value("showHideMessageInContextMenu", defaults._showHideMessageInContextMenu.current());

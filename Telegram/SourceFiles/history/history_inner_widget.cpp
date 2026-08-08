@@ -2888,16 +2888,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 	
 	const auto collectForwardItemsFromSelected = [](
 		const SelectedItems &selected) -> HistoryItemsList {
-		HistoryItemsList items;
-		items.reserve(selected.size());
-		for (const SelectedItems::value_type &entry : selected) {
-			const not_null<HistoryItem*> item = entry.first;
-			const TextSelection selection = entry.second;
-			if (selection == FullSelection) {
-				items.push_back(item);
-			}
-		}
-		return items;
+		return HistoryItemsList(selected.begin(), selected.end());
 	};
 
 	const auto collectForwardItemsForItem = [](
@@ -5499,29 +5490,25 @@ auto HistoryInner::getSelectionState() const
 	auto result = HistoryView::TopBarWidget::SelectedState {};
 	auto forwardItems = HistoryItemsList();
 	forwardItems.reserve(_selected.size());
-	for (auto &selected : _selected) {
-		if (selected.second == FullSelection) {
-			++result.count;
-			forwardItems.push_back(selected.first);
-			if (selected.first->isEphemeral()) {
+	for (const auto &item : _selected) {
+		++result.count;
+		forwardItems.push_back(item);
+		if (item->isEphemeral()) {
+			++result.canDeleteCount;
+		} else {
+			if (item->canDelete()) {
 				++result.canDeleteCount;
-			} else {
-				if (selected.first->canDelete()) {
-					++result.canDeleteCount;
-				}
-				if (selected.first->allowsForward()) {
-					++result.canForwardCount;
-				}
 			}
-		} else if (selected.second.from != selected.second.to) {
-			result.textSelected = true;
+			if (item->allowsForward()) {
+				++result.canForwardCount;
+			}
 		}
 	}
 	result.hideNoQuote = !forwardItems.empty()
 		&& (AyuForward::isFullAyuForwardNeeded(forwardItems.front())
 			|| AyuForward::isAyuForwardNeeded(forwardItems));
-	result.textSelected = result.textSelected
-		|| (hasSelectedText() && !_selectedTextSelection.empty());
+	result.textSelected = hasSelectedText()
+		&& !_selectedTextSelection.empty();
 	return result;
 }
 

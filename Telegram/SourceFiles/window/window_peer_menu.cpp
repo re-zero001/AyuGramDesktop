@@ -1819,6 +1819,26 @@ void Filler::addRestorePinnedMessages() {
 	}, &st::menuIconPin);
 }
 
+void Filler::fillCommunityChatsListActions() {
+	const auto channel = _peer ? _peer->asChannel() : nullptr;
+	const auto history = _request.key.history();
+	if (!channel || !history) {
+		return;
+	}
+	const auto controller = _controller;
+	_addAction(tr::lng_context_view_community(tr::now), [=] {
+		controller->showPeerInfo(channel);
+	}, &st::menuIconInfo);
+	_addAction(tr::lng_dlg_filter(tr::now), [=] {
+		controller->searchInChat(history);
+	}, &st::menuIconSearch);
+	if (channel->canManageLinkedPeers()) {
+		_addAction(tr::lng_manage_community_title(tr::now), [=] {
+			ShowManageCommunityBox(controller, channel);
+		}, &st::menuIconManage);
+	}
+}
+
 void Filler::fillChatsListActions() {
 	const auto channel = _peer ? _peer->asChannel() : nullptr;
 	if (channel && channel->isCommunity()) {

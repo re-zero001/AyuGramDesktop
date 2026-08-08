@@ -18,8 +18,6 @@ namespace {
 
 constexpr auto kNoBubbleRadiusOverride = -1;
 constexpr auto kZeroBubbleRadius = 0;
-constexpr auto kOptionUseSmallMsgBubbleRadius
-	= "use-small-msg-bubble-radius";
 
 auto AppliedBubbleRadius = kBubbleRadiusSliderMax;
 thread_local auto BubbleRadiusOverrideValue = kNoBubbleRadiusOverride;
@@ -89,6 +87,8 @@ base::options::toggle UseSmallMsgBubbleRadius({
 });
 
 } // namespace
+
+const char kOptionUseSmallMsgBubbleRadius[] = "use-small-msg-bubble-radius";
 
 BubbleRadiusOverride::BubbleRadiusOverride(int value)
 : _previous(BubbleRadiusOverrideValue) {
