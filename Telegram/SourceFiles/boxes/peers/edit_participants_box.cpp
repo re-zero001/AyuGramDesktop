@@ -2051,7 +2051,7 @@ base::unique_qptr<Ui::PopupMenu> ParticipantsBoxController::rowContextMenu(
 			const auto weak = base::make_weak(controller);
 			const auto history = _peer->owner().history(_peer);
 			result->addAction(
-				tr::ayu_UserMessagesMenuText(tr::now),
+				tr::lng_context_search_from(tr::now),
 				[=] {
 					InvokeQueued(QCoreApplication::instance(), [=] {
 						const auto strong = weak.get();
@@ -2069,7 +2069,7 @@ base::unique_qptr<Ui::PopupMenu> ParticipantsBoxController::rowContextMenu(
 						strong->searchInChat(history, user);
 					});
 				},
-				&st::menuIconTTL);
+				&st::menuIconSearch);
 		}
 	}
 	if (user && SupportsMemberTags(_peer)) {
