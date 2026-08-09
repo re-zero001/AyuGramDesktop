@@ -754,3 +754,37 @@ The `Error` template parameter defaults to `rpl::no_error`: `rpl::producer<Type,
 - Pass `rpl::lifetime` to `on_...` methods or store returned lifetime
 - Use `rpl::duplicate(producer)` to reuse a producer multiple times
 - Combined producers automatically unpack tuples in lambdas (works with `rpl::map`, `rpl::filter`, and `rpl::on_next`)
+
+## AyuGram Fork Features
+
+Fork-specific features, customizations, and local conventions. Each item below is an index
+entry; the actual rules live in the matching document under `.agents/docs/`. Read that
+document first and follow its rules when working on the listed area.
+
+- `Localization` — AyuGram strings (`ayu_` keys). Rules: `.agents/docs/localization.md`.
+- `Branch Workflow` — branch roles and official-upstream integration.
+  Rules: `.agents/docs/branch-workflow.md`.
+- `Windows Release Build` — build and deployment contract for this checkout.
+  Rules: `.agents/docs/windows-release-build.md`.
+
+### Localization
+
+AyuGram-specific strings (the `ayu_` prefix, as opposed to upstream tdesktop `lng_` keys):
+two-file structure, how to add a new string, and key-naming / placeholder conventions are
+documented in `.agents/docs/localization.md`. When touching `Telegram/Resources/langs/lang.strings`,
+`Telegram/Resources/langs/zh-hans.lproj/zh-hans.json`, or `tr::ayu_*` keys, read that document
+first and follow its rules.
+
+### Branch Workflow
+
+Branch roles (`dev`, `dev2`, `merge`) and the rules for integrating Telegram official updates
+and the Gitea-ahead Ayu line are documented in `.agents/docs/branch-workflow.md`. When merging,
+rebasing, or refreshing branches in this repository, read that document first and follow its
+rules.
+
+### Windows Release Build
+
+The build and deployment contract for this checkout (Release by default, toolchain shell,
+build authorization gate, canonical `.agents/*.cmd` scripts) is documented in
+`.agents/docs/windows-release-build.md`. Before any build, test-build, or deployment action in
+this checkout, read that document first and follow its rules.
