@@ -19,100 +19,13 @@ MessagesSearchMerged::MessagesSearchMerged(not_null<History*> history)
 
 	_apiSearch.messagesFounds(
 	) | rpl::on_next([=](const FoundMessages &data) {
-		if (!_apiStarted || data.nextToken != _concatedFound.nextToken) {
-			_apiStarted = true;
-			_apiFinished = data.finished;
-			_apiFailed = data.failed;
-			_concatedFound = data;
-			if (_migratedStarted) {
-				_concatedFound.total = (_concatedFound.total >= 0
-					&& _migratedFirstFound.total >= 0)
-					? _concatedFound.total + _migratedFirstFound.total
-					: -1;
-			}
-			if (_apiFinished) {
-				addMigratedFirstFound();
-			}
-			_concatedFound.failed = _apiFailed
-				|| (_migratedStarted && _migratedFailed);
-			_concatedFound.finished = _apiFinished
-				&& (!_migratedSearch || (_migratedStarted && _migratedFinished))
-				&& !_concatedFound.failed;
-			_newFounds.fire({});
-		} else {
-			addFound(data);
-			_apiFinished = data.finished;
-			_apiFailed = data.failed;
-			_concatedFound.total = (_concatedFound.total >= 0
-				&& data.total >= 0)
-				? data.total + (_migratedStarted
-					&& _migratedFirstFound.total >= 0
-					? _migratedFirstFound.total
-					: 0)
-				: -1;
-			if (_apiFinished) {
-				addMigratedFirstFound();
-			}
-			_concatedFound.failed = _apiFailed
-				|| (_migratedStarted && _migratedFailed);
-			_concatedFound.finished = _apiFinished
-				&& (!_migratedSearch || _migratedFinished)
-				&& !_concatedFound.failed;
-			_nextFounds.fire({});
-		}
+		applyApiFound(data);
 	}, _lifetime);
 
 	if (_migratedSearch) {
 		_migratedSearch->messagesFounds(
 		) | rpl::on_next([=](const FoundMessages &data) {
-			const auto replacingTotalOnly = _migratedStarted
-				&& data.nextToken == _migratedFirstFound.nextToken
-				&& _migratedFirstFound.totalOnly;
-			if (!_migratedStarted
-				|| data.nextToken != _migratedFirstFound.nextToken
-				|| _migratedFirstFound.totalOnly) {
-				if (replacingTotalOnly) {
-					_migratedAdded = false;
-				}
-				_migratedStarted = true;
-				_migratedFinished = data.finished;
-				_migratedFailed = data.failed;
-				_migratedFirstFound = data;
-				if (_apiStarted && !_apiFinished) {
-					_concatedFound.total = (_concatedFound.total >= 0
-						&& data.total >= 0)
-						? _concatedFound.total + data.total
-						: -1;
-					_concatedFound.failed = _apiFailed || _migratedFailed;
-					_newFounds.fire({});
-				} else if (_apiStarted && !_migratedAdded) {
-					_concatedFound.total = (_concatedFound.total >= 0
-						&& data.total >= 0)
-						? _concatedFound.total + data.total
-						: -1;
-					addMigratedFirstFound();
-					_concatedFound.failed = _apiFailed || _migratedFailed;
-					_concatedFound.finished = _migratedFinished
-						&& !_concatedFound.failed;
-					_nextFounds.fire({});
-				}
-				return;
-			}
-			_migratedFinished = data.finished;
-			_migratedFailed = data.failed;
-			if (_apiFinished) {
-				_concatedFound.total = (_concatedFound.total >= 0
-					&& _migratedFirstFound.total >= 0
-					&& data.total >= 0)
-					? _concatedFound.total - _migratedFirstFound.total
-						+ data.total
-					: -1;
-				addFound(data);
-				_concatedFound.failed = _apiFailed || _migratedFailed;
-				_concatedFound.finished = _migratedFinished
-					&& !_concatedFound.failed;
-				_nextFounds.fire({});
-			}
+			applyMigratedFound(data);
 		}, _lifetime);
 	}
 }
@@ -122,29 +35,72 @@ void MessagesSearchMerged::disableMigrated() {
 	_migratedStarted = false;
 	_migratedFinished = true;
 	_migratedFailed = false;
-	_migratedAdded = true;
+	_migratedTotal = -1;
 	_concatedFound.failed = _apiFailed;
 	_concatedFound.finished = _apiFinished && !_apiFailed;
+	_concatedFound.total = _apiTotal;
 }
 
 void MessagesSearchMerged::addFound(const FoundMessages &data) {
 	for (const auto &message : data.messages) {
 		_concatedFound.messages.push_back(message);
 	}
-	if (data.finished || data.failed || !data.messages.empty()) {
-		_concatedFound.totalOnly = false;
-	} else if (data.totalOnly && _concatedFound.messages.empty()) {
-		_concatedFound.totalOnly = true;
-	}
-	_concatedFound.failed = _concatedFound.failed || data.failed;
 }
 
-void MessagesSearchMerged::addMigratedFirstFound() {
-	if (_migratedAdded || !_migratedStarted) {
+void MessagesSearchMerged::applyApiFound(const FoundMessages &data) {
+	_apiFinished = data.finished;
+	_apiFailed = data.failed;
+	_apiTotal = data.total;
+	addFound(data);
+	updateCombinedState(data);
+	fireFound();
+	if (_apiFinished && !_apiFailed) {
+		startMigrated();
+	}
+}
+
+void MessagesSearchMerged::applyMigratedFound(const FoundMessages &data) {
+	_migratedFinished = data.finished;
+	_migratedFailed = data.failed;
+	_migratedTotal = data.total;
+	addFound(data);
+	updateCombinedState(data);
+	fireFound();
+}
+
+void MessagesSearchMerged::updateCombinedState(const FoundMessages &data) {
+	_concatedFound.nextToken = data.nextToken;
+	_concatedFound.total = !_migratedStarted
+		? _apiTotal
+		: (_apiTotal >= 0 && _migratedTotal >= 0)
+		? _apiTotal + _migratedTotal
+		: -1;
+	_concatedFound.failed = _apiFailed || _migratedFailed;
+	_concatedFound.finished = _apiFinished
+		&& (!_migratedSearch || (_migratedStarted && _migratedFinished))
+		&& !_concatedFound.failed;
+	_concatedFound.totalOnly = data.totalOnly
+		&& data.messages.empty()
+		&& _concatedFound.messages.empty()
+		&& !data.finished
+		&& !data.failed;
+}
+
+void MessagesSearchMerged::startMigrated() {
+	if (!_migratedSearch || _migratedStarted || _apiFailed) {
 		return;
 	}
-	addFound(_migratedFirstFound);
-	_migratedAdded = true;
+	_migratedStarted = true;
+	_migratedSearch->searchMessages(_request);
+}
+
+void MessagesSearchMerged::fireFound() {
+	if (_outputStarted) {
+		_nextFounds.fire({});
+	} else {
+		_outputStarted = true;
+		_newFounds.fire({});
+	}
 }
 
 const FoundMessages &MessagesSearchMerged::messages() const {
@@ -157,21 +113,21 @@ const MessagesSearch::Request &MessagesSearchMerged::request() const {
 
 void MessagesSearchMerged::clear() {
 	_concatedFound = {};
-	_migratedFirstFound = {};
-	_apiStarted = false;
 	_apiFinished = false;
 	_apiFailed = false;
 	_migratedStarted = false;
 	_migratedFinished = false;
 	_migratedFailed = false;
-	_migratedAdded = false;
+	_outputStarted = false;
+	_apiTotal = -1;
+	_migratedTotal = -1;
 }
 
 void MessagesSearchMerged::search(const Request &search) {
 	_request = search;
 	clear();
 	if (_migratedSearch) {
-		_migratedSearch->searchMessages(search);
+		_migratedSearch->cancel();
 	}
 	_apiSearch.searchMessages(search);
 }
@@ -181,6 +137,8 @@ void MessagesSearchMerged::searchMore() {
 		return;
 	} else if (!_apiFinished) {
 		_apiSearch.searchMore();
+	} else if (_migratedSearch && !_migratedStarted) {
+		startMigrated();
 	} else if (_migratedSearch && !_migratedFinished) {
 		_migratedSearch->searchMore();
 	}

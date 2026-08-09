@@ -202,6 +202,32 @@ constexpr auto kRefillDelay = crl::time(300);
 		MTP_long(0));
 }
 
+[[nodiscard]] MTPmessages_GetReplies PrepareRepliesRequest(
+		not_null<History*> history,
+		const MessagesSearch::Request &request,
+		MsgId offsetId) {
+	return MTPmessages_GetReplies(
+		history->peer->input(),
+		MTP_int(request.topMsgId),
+		MTP_int(offsetId),
+		MTP_int(0),
+		MTP_int(0),
+		MTP_int(kSearchPerPage),
+		MTP_int(0),
+		MTP_int(0),
+		MTP_long(0));
+}
+
+[[nodiscard]] bool UseRepliesForTextCandidate(
+		const MessagesSearch::Request &request) {
+	return request.filter == SearchFilter::Text
+		&& request.query.isEmpty()
+		&& !request.from
+		&& request.topMsgId
+		&& request.tags.empty()
+		&& !request.savedPeer;
+}
+
 [[nodiscard]] bool IsDisplayedAsAnimatedEmoji(
 		not_null<HistoryItem*> item) {
 	const auto text = Ui::Text::String(
@@ -232,6 +258,11 @@ void MessagesSearch::cancelCurrentRequests() {
 	_history->session().api().request(base::take(_requestId)).cancel();
 	_history->session().api().request(base::take(_probeRequestA)).cancel();
 	_history->session().api().request(base::take(_probeRequestB)).cancel();
+}
+
+void MessagesSearch::cancel() {
+	++_generation;
+	cancelCurrentRequests();
 }
 
 void MessagesSearch::searchMessages(Request request) {
@@ -519,28 +550,38 @@ void MessagesSearch::searchCandidatePage() {
 		_history,
 		Data::Histories::RequestType::History,
 		[=](Fn<void()> finish) mutable {
-			_requestId = _history->session().api().request(
-				PrepareSearchRequest(
+			const auto done = [=](
+					const TLMessages &result,
+					mtpRequestId id) {
+				if (generation == _generation) {
+					_searchInHistoryRequest = 0;
+					searchCandidateReceived(result, id, nextToken);
+				}
+				finish();
+			};
+			const auto fail = [=](const MTP::Error &, mtpRequestId) {
+				if (generation == _generation) {
+					_searchInHistoryRequest = 0;
+					searchCandidateFailed();
+				}
+				finish();
+			};
+			const auto send = [&](auto request) {
+				return _history->session().api().request(
+					std::move(request)
+				).done(done).fail(fail).send();
+			};
+			_requestId = UseRepliesForTextCandidate(_request)
+				? send(PrepareRepliesRequest(
+					_history,
+					_request,
+					_candidateOffset))
+				: send(PrepareSearchRequest(
 					_history,
 					_request,
 					from,
 					filter,
-					_candidateOffset))
-				.done([=](const TLMessages &result, mtpRequestId id) {
-					if (generation == _generation) {
-						_searchInHistoryRequest = 0;
-						searchCandidateReceived(result, id, nextToken);
-					}
-					finish();
-				})
-				.fail([=](const MTP::Error &, mtpRequestId) {
-					if (generation == _generation) {
-						_searchInHistoryRequest = 0;
-						searchCandidateFailed();
-					}
-					finish();
-				})
-				.send();
+					_candidateOffset));
 			return _requestId;
 		});
 }
@@ -580,14 +621,13 @@ void MessagesSearch::searchCandidateReceived(
 			continue;
 		}
 		const auto item = _history->owner().message(id);
-		const auto matchesSender = item
-			&& (!_request.from || item->from() == _request.from);
+		const auto senderMatches = item && matchesSender(item);
 		const auto matchesFilter = item
-			&& MatchesLocalFilter(item, _request.filter);
-		const auto matchesOther = (_mode == Mode::FromAndType)
-			? (_candidateFrom ? matchesFilter : matchesSender)
-			: MatchesText(item);
-		if (matchesOther && matchesSender && matchesFilter) {
+			&& matchesLocalFilter(item, _request.filter);
+		const auto matchesOther = item && ((_mode == Mode::FromAndType)
+			? (_candidateFrom ? matchesFilter : senderMatches)
+			: matchesText(item));
+		if (matchesOther && senderMatches && matchesFilter) {
 			_pendingMessages.push_back(id);
 			++_foundCount;
 		} else {
@@ -663,14 +703,23 @@ void MessagesSearch::maybeFireCandidateOutput(bool force) {
 	});
 }
 
-bool MessagesSearch::MatchesText(not_null<HistoryItem*> item) const {
+bool MessagesSearch::matchesSender(not_null<HistoryItem*> item) const {
+	if (!_request.from) {
+		return true;
+	} else if (_history->peer->isSelf()) {
+		return item->sublistPeerId() == _request.from->id;
+	}
+	return item->from() == _request.from;
+}
+
+bool MessagesSearch::matchesText(not_null<HistoryItem*> item) const {
 	return !item->isService()
 		&& !item->originalText().text.isEmpty()
 		&& !IsDisplayedAsAnimatedEmoji(item)
 		&& (!item->media() || item->media()->webpage());
 }
 
-bool MessagesSearch::MatchesLocalFilter(
+bool MessagesSearch::matchesLocalFilter(
 		not_null<HistoryItem*> item,
 		SearchFilter filter) const {
 	using Type = Storage::SharedMediaType;
@@ -678,7 +727,7 @@ bool MessagesSearch::MatchesLocalFilter(
 	switch (filter) {
 	case SearchFilter::NoFilter: return true;
 	case SearchFilter::Pinned: return item->isPinned();
-	case SearchFilter::Text: return MatchesText(item);
+	case SearchFilter::Text: return matchesText(item);
 	case SearchFilter::Photo: return types.test(Type::Photo);
 	case SearchFilter::Video: return types.test(Type::Video);
 	case SearchFilter::Voice: return types.test(Type::VoiceFile);

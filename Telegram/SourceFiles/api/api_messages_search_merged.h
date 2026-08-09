@@ -39,23 +39,26 @@ public:
 private:
 	void clear();
 	void addFound(const FoundMessages &data);
-	void addMigratedFirstFound();
+	void applyApiFound(const FoundMessages &data);
+	void applyMigratedFound(const FoundMessages &data);
+	void updateCombinedState(const FoundMessages &data);
+	void startMigrated();
+	void fireFound();
 
 	MessagesSearch _apiSearch;
 	Request _request;
 
 	std::optional<MessagesSearch> _migratedSearch;
-	FoundMessages _migratedFirstFound;
-
 	FoundMessages _concatedFound;
 
-	bool _apiStarted = false;
 	bool _apiFinished = false;
 	bool _apiFailed = false;
 	bool _migratedStarted = false;
 	bool _migratedFinished = false;
 	bool _migratedFailed = false;
-	bool _migratedAdded = false;
+	bool _outputStarted = false;
+	int _apiTotal = -1;
+	int _migratedTotal = -1;
 
 	rpl::event_stream<> _newFounds;
 	rpl::event_stream<> _nextFounds;

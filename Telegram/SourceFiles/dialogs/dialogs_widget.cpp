@@ -3139,6 +3139,20 @@ bool Widget::search(bool inCache, SearchRequestDelay delay) {
 		: nullptr;
 	const auto filter = _searchState.filter;
 	const auto fromArchive = _searchState.fromArchive;
+	const auto sublist = inPeer && !_openedForum
+		? _searchState.inChat.sublist()
+		: nullptr;
+	const auto topic = inPeer ? searchInTopic() : nullptr;
+	const auto chatRequest = inPeer
+		? Api::MessagesSearch::Request{
+			.query = query,
+			.from = sublist ? nullptr : fromPeer,
+			.tags = inTags,
+			.topMsgId = topic ? topic->rootId() : 0,
+			.filter = _searchState.typeFilter,
+			.savedPeer = sublist ? sublist->sublistPeer().get() : nullptr,
+		}
+		: Api::MessagesSearch::Request();
 	const auto fromStartType = SearchRequestType{
 		.start = true,
 		.peer = (inPeer != nullptr),
@@ -3197,14 +3211,17 @@ bool Widget::search(bool inCache, SearchRequestDelay delay) {
 			searchReceived(fromStartType, i->second, process, true);
 			result = true;
 		}
-	} else if (_searchQuery != query
-		|| _searchQueryFrom != fromPeer
-		|| _searchQueryTags != inTags
-		|| _searchQueryTypeFilter != _searchState.typeFilter
-		|| _searchQueryTab != tab
-		|| _searchQueryCommunity != community
-		|| _searchQueryFilter != filter
-		|| _searchQueryFromArchive != fromArchive) {
+	} else if ((inPeer && (!_chatSearch
+			|| _chatSearchPeer != inPeer
+			|| _chatSearch->request() != chatRequest))
+		|| (!inPeer && (_searchQuery != query
+			|| _searchQueryFrom != fromPeer
+			|| _searchQueryTags != inTags
+			|| _searchQueryTypeFilter != _searchState.typeFilter
+			|| _searchQueryTab != tab
+			|| _searchQueryCommunity != community
+			|| _searchQueryFilter != filter
+			|| _searchQueryFromArchive != fromArchive))) {
 		const auto process = currentSearchProcess();
 		_searchQuery = query;
 		_searchQueryFrom = fromPeer;
@@ -3219,12 +3236,9 @@ bool Widget::search(bool inCache, SearchRequestDelay delay) {
 		_migratedProcess.full = false;
 		cancelSearchRequest();
 		if (inPeer) {
-			const auto sublist = _openedForum
-				? nullptr
-				: _searchState.inChat.sublist();
-			const auto topic = searchInTopic();
 			const auto history = session().data().history(inPeer);
 			_chatSearch = std::make_unique<Api::MessagesSearchMerged>(history);
+			_chatSearchPeer = inPeer;
 			_chatSearchShownCount = 0;
 			_chatSearchStarted = false;
 			_chatSearch->newFounds() | rpl::on_next([=] {
@@ -3233,14 +3247,7 @@ bool Widget::search(bool inCache, SearchRequestDelay delay) {
 			_chatSearch->nextFounds() | rpl::on_next([=] {
 				searchChatReceived(false);
 			}, lifetime());
-			_chatSearch->search({
-				.query = _searchQuery,
-				.from = sublist ? nullptr : _searchQueryFrom,
-				.tags = _searchQueryTags,
-				.topMsgId = topic ? topic->rootId() : 0,
-				.filter = _searchQueryTypeFilter,
-				.savedPeer = sublist ? sublist->sublistPeer().get() : nullptr,
-			});
+			_chatSearch->search(chatRequest);
 		} else if (_searchState.tab == ChatSearchTab::PublicPosts) {
 			requestPublicPosts(true);
 		} else {
@@ -4164,9 +4171,14 @@ bool Widget::applySearchState(SearchState state) {
 			: ChatSearchTab::MyMessages;
 		state.community = nullptr;
 	}
-	if (!state.inChat && !forum) {
+	const auto typeFilterSupported = (state.tab == ChatSearchTab::ThisTopic
+		|| state.tab == ChatSearchTab::ThisPeer)
+		&& (state.inChat || forum || _openedForum);
+	if (!typeFilterSupported) {
 		state.typeFilter = Api::SearchFilter::NoFilter;
 	}
+	const auto typeFilterChanged = (_searchState.typeFilter
+		!= state.typeFilter);
 
 	const auto migrateFrom = (peer
 		&& !topic
@@ -4209,11 +4221,13 @@ bool Widget::applySearchState(SearchState state) {
 
 	const auto searchCleared = state.query.isEmpty()
 		&& !state.fromPeer
-		&& state.tags.empty();
+		&& state.tags.empty()
+		&& state.typeFilter == Api::SearchFilter::NoFilter;
 	if (searchCleared
 		|| inChatChanged
 		|| communityChanged
 		|| fromPeerChanged
+		|| typeFilterChanged
 		|| filterChanged
 		|| fromArchiveChanged
 		|| tagsChanged
@@ -4270,6 +4284,11 @@ void Widget::clearSearchCache(bool clearPosts) {
 	_searchQuery = QString();
 	_searchQueryFrom = nullptr;
 	_searchQueryTags.clear();
+	_searchQueryTypeFilter = Api::SearchFilter::NoFilter;
+	_searchQueryTab = {};
+	_searchQueryCommunity = nullptr;
+	_searchQueryFilter = {};
+	_searchQueryFromArchive = true;
 	if (clearPosts) {
 		_postsProcess.cache.clear();
 		const auto queries = base::take(_postsProcess.queries);
@@ -4971,6 +4990,7 @@ void Widget::cancelSearchRequest() {
 	session().data().histories().cancelRequest(
 		base::take(_historiesRequest));
 	_chatSearch.reset();
+	_chatSearchPeer = nullptr;
 	_chatSearchShownCount = 0;
 	_chatSearchStarted = false;
 }

@@ -395,7 +395,7 @@ void ChatSearchIn::updateType(
 	updateSection(
 		&_type,
 		filter == Api::SearchFilter::NoFilter ? nullptr : std::move(icon),
-		TextWithEntities{ std::move(name) });
+		tr::marked(std::move(name)));
 	if (_type.outer) {
 		_type.outer->setAccessibleName(accessibleName);
 	}

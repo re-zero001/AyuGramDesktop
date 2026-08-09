@@ -435,6 +435,7 @@ private:
 	bool _searchQueryFromArchive = true;
 
 	std::unique_ptr<Api::MessagesSearchMerged> _chatSearch;
+	PeerData *_chatSearchPeer = nullptr;
 	int _chatSearchShownCount = 0;
 	bool _chatSearchStarted = false;
 

@@ -1715,10 +1715,16 @@ bool TopBarWidget::searchJumpToDateFits() const {
 		+ fieldSt.placeholderMargins.left()
 		+ fieldSt.placeholderFont->width(tr::lng_dlg_filter(tr::now))
 		+ fieldSt.placeholderMargins.right();
+	const auto typeWidth = _chooseType
+		? int(_chooseType->width() * _chooseType->shownProgress())
+		: 0;
+	const auto fromWidth = _chooseFromUser
+		? int(_chooseFromUser->width() * _chooseFromUser->shownProgress())
+		: 0;
 	const auto required = placeholderWidth
 		+ st::dialogsFilterPadding.x()
-		+ st::dialogsSearchTypeTopBar.width
-		+ st::dialogsSearchFromTopBar.width
+		+ typeWidth
+		+ fromWidth
 		+ st::dialogsCalendarTopBar.width
 		+ st::dialogsCancelSearch.width;
 	return (_searchField->width() >= required);
@@ -1790,6 +1796,7 @@ void TopBarWidget::searchEnableChooseFromUser(bool enable, bool visible) {
 		_chooseFromUser->setUpdatedCallback([=](float64) {
 			updateSearchAdditionalMargins();
 			updateChooseFromUserGeometry();
+			updateSearchJumpToDateVisibility();
 		});
 		_chooseFromUser->toggle(visible, anim::type::instant);
 		_chooseFromUser->entity()->clicks(
@@ -1818,6 +1825,7 @@ void TopBarWidget::searchEnableChooseType(bool enable, bool visible) {
 		_chooseType->setUpdatedCallback([=](float64) {
 			updateSearchAdditionalMargins();
 			updateChooseFromUserGeometry();
+			updateSearchJumpToDateVisibility();
 		});
 		_chooseType->toggle(visible, anim::type::instant);
 		_chooseType->entity()->clicks(

@@ -60,6 +60,8 @@ public:
 	[[nodiscard]] rpl::producer<FoundMessages> messagesFounds() const;
 
 private:
+	friend class MessagesSearchMerged;
+
 	enum class Mode : uchar {
 		Normal,
 		Text,
@@ -90,12 +92,14 @@ private:
 	void candidateSideFinished();
 	void maybeChooseCandidate();
 	void maybeFireCandidateOutput(bool force);
-	[[nodiscard]] bool MatchesText(not_null<HistoryItem*> item) const;
-	[[nodiscard]] bool MatchesLocalFilter(
+	[[nodiscard]] bool matchesSender(not_null<HistoryItem*> item) const;
+	[[nodiscard]] bool matchesText(not_null<HistoryItem*> item) const;
+	[[nodiscard]] bool matchesLocalFilter(
 		not_null<HistoryItem*> item,
 		SearchFilter filter) const;
 
 	void cancelCurrentRequests();
+	void cancel();
 
 	const not_null<History*> _history;
 

@@ -5263,6 +5263,7 @@ bool InnerWidget::communitySearchActive() const {
 
 void InnerWidget::updateSearchIn() {
 	if (!_searchState.inChat
+		&& !_openedForum
 		&& _searchHashOrCashtag == HashOrCashtag::None
 		&& !archiveSearchActive()
 		&& !communitySearchActive()) {
@@ -5426,9 +5427,11 @@ bool InnerWidget::computeSearchWithPostsPreview() const {
 void InnerWidget::clearFilter() {
 	if (_state == WidgetState::Filtered
 		|| _searchState.inChat
+		|| _searchState.typeFilter != Api::SearchFilter::NoFilter
 		|| archiveSearchActive()
 		|| communitySearchActive()) {
 		if (_searchState.inChat
+			|| _searchState.typeFilter != Api::SearchFilter::NoFilter
 			|| archiveSearchActive()
 			|| communitySearchActive()) {
 			setState(WidgetState::Filtered);
