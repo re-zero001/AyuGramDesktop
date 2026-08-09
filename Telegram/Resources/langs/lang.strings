@@ -9055,3 +9055,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_TitleMultipleForward" = "Forward to...";
 "ayu_TitleForwarded" = "Forwarded";
 "ayu_ContextForward" = "Forward";
+"ayu_SearchFilterAll" = "All messages";
+"ayu_SearchFilterType" = "Filter by message type";
+"ayu_SearchFilterText" = "Text";
+"ayu_SearchFilterPhoto" = "Photos";
+"ayu_SearchFilterVideo" = "Videos";
+"ayu_SearchFilterVoice" = "Voice messages";
+"ayu_SearchFilterRound" = "Video messages";
+"ayu_SearchFilterFile" = "Files";
+"ayu_SearchFilterMusic" = "Music";
+"ayu_SearchFilterGif" = "GIFs";

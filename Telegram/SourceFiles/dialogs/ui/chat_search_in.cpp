@@ -14,9 +14,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/widgets/popup_menu.h"
 #include "ui/widgets/shadow.h"
 #include "ui/widgets/menu/menu_item_base.h"
+struct FullMsgId;
 #include "ui/dynamic_image.h"
+#include "ui/dynamic_thumbnails.h"
 #include "ui/painter.h"
 #include "styles/style_dialogs.h"
+#include "styles/style_menu_icons.h"
 #include "styles/style_window.h"
 
 namespace Dialogs {
@@ -268,6 +271,64 @@ ChatSearchIn::ChatSearchIn(QWidget *parent)
 	_in.clicks.events() | rpl::on_next([=] {
 		showMenu();
 	}, lifetime());
+	_type.clicks.events() | rpl::on_next([=] {
+		showTypeMenu();
+	}, lifetime());
+}
+
+void FillSearchTypeMenu(
+		not_null<Ui::PopupMenu*> menu,
+		Api::SearchFilter current,
+		Fn<void(Api::SearchFilter)> callback) {
+	const auto addAction = [&](Api::SearchFilter filter,
+			const style::icon &icon,
+			const QString &text) {
+		auto action = base::make_unique_q<Action>(
+			menu,
+			Ui::MakeIconThumbnail(icon),
+			text,
+			(current == filter));
+		action->setActionTriggered([=] {
+			callback(filter);
+		});
+		menu->addAction(std::move(action));
+	};
+	addAction(
+		Api::SearchFilter::NoFilter,
+		st::menuIconTagFilter,
+		tr::ayu_SearchFilterAll(tr::now));
+	addAction(
+		Api::SearchFilter::Text,
+		st::menuIconChatBubble,
+		tr::ayu_SearchFilterText(tr::now));
+	addAction(
+		Api::SearchFilter::Photo,
+		st::menuIconPhoto,
+		tr::ayu_SearchFilterPhoto(tr::now));
+	addAction(
+		Api::SearchFilter::Video,
+		st::menuIconVideoChat,
+		tr::ayu_SearchFilterVideo(tr::now));
+	addAction(
+		Api::SearchFilter::Voice,
+		st::menuIconSoundOn,
+		tr::ayu_SearchFilterVoice(tr::now));
+	addAction(
+		Api::SearchFilter::Round,
+		st::menuIconVideoChat,
+		tr::ayu_SearchFilterRound(tr::now));
+	addAction(
+		Api::SearchFilter::File,
+		st::menuIconFile,
+		tr::ayu_SearchFilterFile(tr::now));
+	addAction(
+		Api::SearchFilter::Music,
+		st::menuIconSoundSelect,
+		tr::ayu_SearchFilterMusic(tr::now));
+	addAction(
+		Api::SearchFilter::Gif,
+		st::menuIconGif,
+		tr::ayu_SearchFilterGif(tr::now));
 }
 
 ChatSearchIn::~ChatSearchIn() = default;
@@ -311,8 +372,50 @@ rpl::producer<> ChatSearchIn::changeFromRequests() const {
 	return _from.clicks.events();
 }
 
+rpl::producer<> ChatSearchIn::cancelTypeRequests() const {
+	return _type.cancelRequests.events();
+}
+
+rpl::producer<Api::SearchFilter> ChatSearchIn::typeChanges() const {
+	return _typeFilterChanges.events();
+}
+
 rpl::producer<ChatSearchTab> ChatSearchIn::tabChanges() const {
 	return _active.changes();
+}
+
+void ChatSearchIn::updateType(
+		Api::SearchFilter filter,
+		std::shared_ptr<Ui::DynamicImage> icon,
+		QString name) {
+	_typeFilter = filter;
+	const auto accessibleName = tr::ayu_SearchFilterType(tr::now)
+		+ u": "_q
+		+ name;
+	updateSection(
+		&_type,
+		filter == Api::SearchFilter::NoFilter ? nullptr : std::move(icon),
+		TextWithEntities{ std::move(name) });
+	if (_type.outer) {
+		_type.outer->setAccessibleName(accessibleName);
+	}
+	resizeToWidth(width());
+}
+
+void ChatSearchIn::showTypeMenu() {
+	_menu = base::make_unique_q<Ui::PopupMenu>(
+		this,
+		st::dialogsSearchInMenu);
+	FillSearchTypeMenu(
+		_menu.get(),
+		_typeFilter,
+		[=](Api::SearchFilter filter) {
+			if (_typeFilter != filter) {
+				_typeFilter = filter;
+				_typeFilterChanges.fire_copy(filter);
+			}
+		});
+	_menu->popup(QCursor::pos());
 }
 
 void ChatSearchIn::showMenu() {
@@ -382,6 +485,13 @@ int ChatSearchIn::resizeGetHeight(int newWidth) {
 		raw->move(0, result);
 		result += raw->height();
 		_from.shadow->setGeometry(0, result, newWidth, st::lineWidth);
+		result += st::lineWidth;
+	}
+	if (const auto raw = _type.outer.get()) {
+		raw->resizeToWidth(newWidth);
+		raw->move(0, result);
+		result += raw->height();
+		_type.shadow->setGeometry(0, result, newWidth, st::lineWidth);
 		result += st::lineWidth;
 	}
 	return result;

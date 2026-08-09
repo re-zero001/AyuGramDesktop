@@ -303,6 +303,11 @@ dialogsSearchFrom: IconButton(dialogsCalendar) {
 	icon: icon {{ "dialogs/dialogs_search_from", dialogsMenuIconFg }};
 	iconOver: icon {{ "dialogs/dialogs_search_from", dialogsMenuIconFgOver }};
 }
+dialogsSearchType: IconButton(dialogsCalendar) {
+	width: 29px;
+	icon: icon {{ "menu/tag_filter", dialogsMenuIconFg }};
+	iconOver: icon {{ "menu/tag_filter", dialogsMenuIconFgOver }};
+}
 
 dialogsFilter: InputField(defaultInputField) {
 	textBg: filterInputInactiveBg;
@@ -360,6 +365,9 @@ dialogsCalendarTopBar: IconButton(dialogsCalendar) {
 	width: 26px;
 }
 dialogsSearchFromTopBar: IconButton(dialogsSearchFrom) {
+	width: 26px;
+}
+dialogsSearchTypeTopBar: IconButton(dialogsSearchType) {
 	width: 26px;
 }
 

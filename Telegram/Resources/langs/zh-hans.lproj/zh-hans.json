@@ -426,5 +426,15 @@
   "TitleForwardAsCopy": "复制到...",
   "TitleMultipleForward": "转发到...",
   "TitleForwarded": "已转发",
-  "ContextForward": "转发"
+  "ContextForward": "转发",
+  "SearchFilterAll": "全部消息",
+  "SearchFilterType": "按消息类型过滤",
+  "SearchFilterText": "文字",
+  "SearchFilterPhoto": "照片",
+  "SearchFilterVideo": "视频",
+  "SearchFilterVoice": "语音消息",
+  "SearchFilterRound": "视频消息",
+  "SearchFilterFile": "文件",
+  "SearchFilterMusic": "音乐",
+  "SearchFilterGif": "GIF"
 }

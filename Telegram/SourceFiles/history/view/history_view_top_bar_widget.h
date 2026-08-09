@@ -92,6 +92,7 @@ public:
 	bool toggleSearch(bool shown, anim::type animated);
 	void searchEnableJumpToDate(bool enable);
 	void searchEnableChooseFromUser(bool enable, bool visible);
+	void searchEnableChooseType(bool enable, bool visible);
 	bool searchSetFocus();
 	[[nodiscard]] bool searchMode() const;
 	[[nodiscard]] rpl::producer<bool> searchModeChanges() const;
@@ -131,6 +132,9 @@ public:
 	[[nodiscard]] rpl::producer<> chooseFromUserRequest() const {
 		return _chooseFromUserRequests.events();
 	}
+	[[nodiscard]] rpl::producer<> chooseTypeRequest() const {
+		return _chooseTypeRequests.events();
+	}
 	[[nodiscard]] rpl::producer<> searchRequest() const;
 
 	void setGeometryWithNarrowRatio(
@@ -161,6 +165,7 @@ private:
 	void updateSearchJumpToDateVisibility();
 	[[nodiscard]] bool searchJumpToDateFits() const;
 	void updateChooseFromUserGeometry();
+	void updateSearchAdditionalMargins();
 	void updateControlsGeometry();
 	void slideAnimationCallback();
 	void updateInfoToggleActive();
@@ -242,6 +247,8 @@ private:
 	object_ptr<Ui::InputField> _searchField = { nullptr };
 	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _chooseFromUser
 		= { nullptr };
+	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _chooseType
+		= { nullptr };
 	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _jumpToDate
 		= { nullptr };
 	object_ptr<Ui::CrossButton> _searchCancel = { nullptr };
@@ -250,6 +257,7 @@ private:
 	rpl::event_stream<> _searchSubmitted;
 	rpl::event_stream<> _jumpToDateRequests;
 	rpl::event_stream<> _chooseFromUserRequests;
+	rpl::event_stream<> _chooseTypeRequests;
 	rpl::event_stream<bool> _searchModeChanges;
 
 	object_ptr<Ui::IconButton> _back;

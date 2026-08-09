@@ -118,6 +118,34 @@ constexpr auto kStartDragToFilterThresholdY = 75;
 constexpr auto kQueryPreviewLimit = 32;
 constexpr auto kPreviewPostsLimit = 3;
 
+const style::icon &SearchFilterIcon(Api::SearchFilter filter) {
+	switch (filter) {
+	case Api::SearchFilter::NoFilter:
+		return st::menuIconTagFilter;
+	case Api::SearchFilter::Pinned:
+		return st::menuIconPin;
+	case Api::SearchFilter::Text:
+		return st::menuIconChatBubble;
+	case Api::SearchFilter::Photo:
+		return st::menuIconPhoto;
+	case Api::SearchFilter::Video:
+		return st::menuIconVideoChat;
+	case Api::SearchFilter::Voice:
+		return st::menuIconSoundOn;
+	case Api::SearchFilter::Round:
+		return st::menuIconVideoChat;
+	case Api::SearchFilter::File:
+		return st::menuIconFile;
+	case Api::SearchFilter::Music:
+		return st::menuIconSoundSelect;
+	case Api::SearchFilter::Gif:
+		return st::menuIconGif;
+	}
+
+	Unexpected("Unknown search filter.");
+	return st::menuIconTagFilter;
+}
+
 [[nodiscard]] uint64 RowsCacheKey(Entry *entry) {
 	return uint64(reinterpret_cast<quintptr>(entry));
 }
@@ -4636,6 +4664,14 @@ rpl::producer<> InnerWidget::changeSearchFromRequests() const {
 	return _changeSearchFromRequests.events();
 }
 
+rpl::producer<> InnerWidget::cancelSearchTypeRequests() const {
+	return _cancelSearchTypeRequests.events();
+}
+
+rpl::producer<Api::SearchFilter> InnerWidget::changeSearchTypeRequests() const {
+	return _changeSearchTypeRequests.events();
+}
+
 rpl::producer<Ui::ScrollToRequest> InnerWidget::mustScrollTo() const {
 	return _mustScrollTo.events();
 }
@@ -4800,6 +4836,11 @@ void InnerWidget::searchReceived(
 		_previewCount = fullCount;
 	}
 
+	refresh();
+}
+
+void InnerWidget::searchCountUpdated(int fullCount) {
+	_searchedCount = fullCount;
 	refresh();
 }
 
@@ -5242,6 +5283,12 @@ void InnerWidget::updateSearchIn() {
 		_searchIn->tabChanges() | rpl::start_to_stream(
 			_changeSearchTabRequests,
 			_searchIn->lifetime());
+		_searchIn->cancelTypeRequests() | rpl::start_to_stream(
+			_cancelSearchTypeRequests,
+			_searchIn->lifetime());
+		_searchIn->typeChanges() | rpl::start_to_stream(
+			_changeSearchTypeRequests,
+			_searchIn->lifetime());
 	}
 
 	const auto sublist = _searchState.inChat.sublist();
@@ -5316,6 +5363,42 @@ void InnerWidget::updateSearchIn() {
 		{ ChatSearchTab::MyMessages, myIcon },
 		{ ChatSearchTab::PublicPosts, publicIcon },
 	}, _searchState.tab, peerTabType, fromImage, fromName);
+
+	const auto typeIcon = Ui::MakeIconThumbnail(
+		SearchFilterIcon(_searchState.typeFilter));
+	auto typeName = tr::ayu_SearchFilterAll(tr::now);
+	switch (_searchState.typeFilter) {
+	case Api::SearchFilter::NoFilter: break;
+	case Api::SearchFilter::Pinned: Unexpected("Pinned in type filter.");
+	case Api::SearchFilter::Text:
+		typeName = tr::ayu_SearchFilterText(tr::now);
+		break;
+	case Api::SearchFilter::Photo:
+		typeName = tr::ayu_SearchFilterPhoto(tr::now);
+		break;
+	case Api::SearchFilter::Video:
+		typeName = tr::ayu_SearchFilterVideo(tr::now);
+		break;
+	case Api::SearchFilter::Voice:
+		typeName = tr::ayu_SearchFilterVoice(tr::now);
+		break;
+	case Api::SearchFilter::Round:
+		typeName = tr::ayu_SearchFilterRound(tr::now);
+		break;
+	case Api::SearchFilter::File:
+		typeName = tr::ayu_SearchFilterFile(tr::now);
+		break;
+	case Api::SearchFilter::Music:
+		typeName = tr::ayu_SearchFilterMusic(tr::now);
+		break;
+	case Api::SearchFilter::Gif:
+		typeName = tr::ayu_SearchFilterGif(tr::now);
+		break;
+	}
+	_searchIn->updateType(
+		_searchState.typeFilter,
+		typeIcon,
+		std::move(typeName));
 }
 
 void InnerWidget::repaintSearchResult(int index) {

@@ -7,8 +7,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "api/api_messages_search_merged.h"
 #include "api/api_peer_search.h"
 #include "base/timer.h"
+#include "base/unique_qptr.h"
 #include "dialogs/dialogs_key.h"
 #include "window/section_widget.h"
 #include "ui/controls/swipe_handler_data.h"
@@ -232,6 +234,8 @@ private:
 
 	void showCalendar();
 	void showSearchFrom();
+	void showSearchType();
+	void searchChatReceived(bool start);
 	void showMainMenu();
 	void clearSearchCache(bool clearPosts);
 	void setSearchQuery(const QString &query, int cursorPosition = -1);
@@ -334,8 +338,10 @@ private:
 	object_ptr<Ui::IconButton> _searchForNarrowLayout;
 	object_ptr<Ui::InputField> _search;
 	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _chooseFromUser;
+	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _chooseSearchType;
 	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _jumpToDate;
 	object_ptr<Ui::CrossButton> _cancelSearch;
+	base::unique_qptr<Ui::PopupMenu> _searchTypeMenu;
 	object_ptr<Ui::FadeWrapScaled<Ui::IconButton>> _lockUnlock;
 
 	std::unique_ptr<Ui::MoreChatsBar> _moreChatsBar;
@@ -422,10 +428,15 @@ private:
 	QString _searchQuery;
 	PeerData *_searchQueryFrom = nullptr;
 	std::vector<Data::ReactionId> _searchQueryTags;
+	Api::SearchFilter _searchQueryTypeFilter = {};
 	ChatSearchTab _searchQueryTab = {};
 	ChannelData *_searchQueryCommunity = nullptr;
 	ChatTypeFilter _searchQueryFilter = {};
 	bool _searchQueryFromArchive = true;
+
+	std::unique_ptr<Api::MessagesSearchMerged> _chatSearch;
+	int _chatSearchShownCount = 0;
+	bool _chatSearchStarted = false;
 
 	Ui::Controls::SwipeBackResult _swipeBackData;
 	bool _swipeBackMirrored = false;

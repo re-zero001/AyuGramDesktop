@@ -140,10 +140,11 @@ public:
 		rpl::producer<ChildListShown> childListShown);
 
 	void searchReceived(
-		std::vector<not_null<HistoryItem*>> result,
-		HistoryItem *inject,
-		SearchRequestType type,
-		int fullCount);
+			std::vector<not_null<HistoryItem*>> result,
+			HistoryItem *inject,
+			SearchRequestType type,
+			int fullCount);
+	void searchCountUpdated(int fullCount);
 	void peerSearchReceived(Api::PeerSearchResult result);
 	void idSearchReceived(const std::vector<not_null<PeerData*>> &results);
 
@@ -214,6 +215,8 @@ public:
 	[[nodiscard]] rpl::producer<> cancelSearchRequests() const;
 	[[nodiscard]] rpl::producer<> cancelSearchFromRequests() const;
 	[[nodiscard]] rpl::producer<> changeSearchFromRequests() const;
+	[[nodiscard]] rpl::producer<> cancelSearchTypeRequests() const;
+	[[nodiscard]] rpl::producer<Api::SearchFilter> changeSearchTypeRequests() const;
 	[[nodiscard]] rpl::producer<ChosenRow> chosenRow() const;
 	[[nodiscard]] rpl::producer<> updated() const;
 
@@ -759,6 +762,8 @@ private:
 	rpl::event_stream<> _cancelSearchRequests;
 	rpl::event_stream<> _cancelSearchFromRequests;
 	rpl::event_stream<> _changeSearchFromRequests;
+	rpl::event_stream<> _cancelSearchTypeRequests;
+	rpl::event_stream<Api::SearchFilter> _changeSearchTypeRequests;
 	object_ptr<Ui::RpWidget> _loadingAnimation = { nullptr };
 	object_ptr<SearchEmpty> _searchEmpty = { nullptr };
 	SearchState _searchEmptyState;

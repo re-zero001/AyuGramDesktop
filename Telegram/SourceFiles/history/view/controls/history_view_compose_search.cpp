@@ -957,14 +957,15 @@ ComposeSearch::Inner::Inner(
 
 	_topBar->searchRequests(
 	) | rpl::on_next([=](SearchRequest search) {
-		if (search.query.isEmpty() && search.tags.empty()) {
+		search.topMsgId = _topMsgId;
+		search.filter = _searchFilter;
+		if (search.query.isEmpty()
+			&& search.tags.empty()
+			&& search.filter == Api::SearchFilter::NoFilter) {
 			if (!search.from || _history->peer->isSelf()) {
 				return;
 			}
 		}
-		search.topMsgId = _topMsgId;
-		search.filter = _searchFilter;
-		_apiSearch.clear();
 
 		_list.controller->addItems({}, true);
 		_list.controller->setQuery(search.query);
@@ -995,6 +996,9 @@ ComposeSearch::Inner::Inner(
 		const auto &apiData = _apiSearch.messages();
 		const auto weak = base::make_weak(_bottomBar.get());
 		_bottomBar->setTotal(apiData.total);
+			if (apiData.totalOnly && !apiData.failed) {
+				return;
+			}
 		if (weak) {
 			// Activating the first search result may switch the chat.
 			_list.controller->addItems(apiData.messages, true);
@@ -1003,10 +1007,14 @@ ComposeSearch::Inner::Inner(
 
 	_apiSearch.nextFounds(
 	) | rpl::on_next([=] {
+		const auto &apiData = _apiSearch.messages();
+		_bottomBar->setTotal(apiData.total);
 		if (_pendingJump.data.token == _apiSearch.messages().nextToken) {
-			_pendingJump.jumps.fire_copy(_pendingJump.data.index);
-		}
-		_list.controller->addItems(_apiSearch.messages().messages, false);
+				_pendingJump.jumps.fire_copy(_pendingJump.data.index);
+			}
+			if (!apiData.totalOnly || apiData.failed) {
+				_list.controller->addItems(apiData.messages, false);
+			}
 	}, _topBar->lifetime());
 
 	rpl::merge(
@@ -1016,7 +1024,7 @@ ComposeSearch::Inner::Inner(
 		const auto &apiData = _apiSearch.messages();
 		const auto &messages = apiData.messages;
 		const auto size = int(messages.size());
-		if (index >= (size - 1) && size != apiData.total) {
+		if (index >= (size - 1) && !apiData.finished) {
 			_apiSearch.searchMore();
 		}
 		if (index >= size || index < 0) {
@@ -1046,7 +1054,7 @@ ComposeSearch::Inner::Inner(
 	_list.controller->searchMoreRequests(
 	) | rpl::on_next([=] {
 		const auto &apiData = _apiSearch.messages();
-		if (int(apiData.messages.size()) != apiData.total) {
+		if (!apiData.finished) {
 			_apiSearch.searchMore();
 		}
 	}, _list.container->lifetime());

@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "api/api_search_filter.h"
 #include "base/unique_qptr.h"
 #include "ui/rp_widget.h"
 
@@ -34,6 +35,11 @@ enum class ChatSearchPeerTabType : uchar {
 	Group,
 };
 
+void FillSearchTypeMenu(
+	not_null<Ui::PopupMenu*> menu,
+	Api::SearchFilter current,
+	Fn<void(Api::SearchFilter)> callback);
+
 class ChatSearchIn final : public Ui::RpWidget {
 public:
 	explicit ChatSearchIn(QWidget *parent);
@@ -49,10 +55,16 @@ public:
 		ChatSearchPeerTabType peerTabType,
 		std::shared_ptr<Ui::DynamicImage> fromUserpic,
 		QString fromName);
+	void updateType(
+		Api::SearchFilter filter,
+		std::shared_ptr<Ui::DynamicImage> icon,
+		QString name);
 
 	[[nodiscard]] rpl::producer<> cancelInRequests() const;
 	[[nodiscard]] rpl::producer<> cancelFromRequests() const;
 	[[nodiscard]] rpl::producer<> changeFromRequests() const;
+	[[nodiscard]] rpl::producer<> cancelTypeRequests() const;
+	[[nodiscard]] rpl::producer<Api::SearchFilter> typeChanges() const;
 	[[nodiscard]] rpl::producer<ChatSearchTab> tabChanges() const;
 
 private:
@@ -72,6 +84,7 @@ private:
 	int resizeGetHeight(int newWidth) override;
 	void paintEvent(QPaintEvent *e) override;
 	void showMenu();
+	void showTypeMenu();
 
 	void updateSection(
 		not_null<Section*> section,
@@ -80,6 +93,9 @@ private:
 
 	Section _in;
 	Section _from;
+	Section _type;
+	Api::SearchFilter _typeFilter = {};
+	rpl::event_stream<Api::SearchFilter> _typeFilterChanges;
 	rpl::variable<ChatSearchTab> _active;
 
 	base::unique_qptr<Ui::PopupMenu> _menu;

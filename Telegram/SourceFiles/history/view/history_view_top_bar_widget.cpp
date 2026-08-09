@@ -1717,6 +1717,7 @@ bool TopBarWidget::searchJumpToDateFits() const {
 		+ fieldSt.placeholderMargins.right();
 	const auto required = placeholderWidth
 		+ st::dialogsFilterPadding.x()
+		+ st::dialogsSearchTypeTopBar.width
 		+ st::dialogsSearchFromTopBar.width
 		+ st::dialogsCalendarTopBar.width
 		+ st::dialogsCancelSearch.width;
@@ -1724,7 +1725,7 @@ bool TopBarWidget::searchJumpToDateFits() const {
 }
 
 void TopBarWidget::updateChooseFromUserGeometry() {
-	if (!_searchField || !_searchCancel || !_chooseFromUser) {
+	if (!_searchField || !_searchCancel) {
 		return;
 	}
 	const auto fieldRight = st::dialogsFilterSkip
@@ -1736,9 +1737,35 @@ void TopBarWidget::updateChooseFromUserGeometry() {
 			st::dialogsCalendarTopBar.width,
 			_jumpToDate->shownProgress())
 		: 0;
-	_chooseFromUser->moveToLeft(
-		cancelLeft - reserved - st::dialogsSearchFromTopBar.width,
-		_searchField->y());
+	auto right = cancelLeft - reserved;
+	if (_chooseFromUser) {
+		_chooseFromUser->moveToLeft(
+			right - st::dialogsSearchFromTopBar.width,
+			_searchField->y());
+		right -= int(_chooseFromUser->width()
+			* _chooseFromUser->shownProgress());
+	}
+	if (_chooseType) {
+		_chooseType->moveToLeft(
+			right - st::dialogsSearchTypeTopBar.width,
+			_searchField->y());
+	}
+}
+
+void TopBarWidget::updateSearchAdditionalMargins() {
+	if (!_searchField) {
+		return;
+	}
+	auto right = 0;
+	if (_chooseFromUser) {
+		right += int(_chooseFromUser->width()
+			* _chooseFromUser->shownProgress());
+	}
+	if (_chooseType) {
+		right += int(_chooseType->width()
+			* _chooseType->shownProgress());
+	}
+	_searchField->setAdditionalMargins(QMargins(0, 0, right, 0));
 }
 
 void TopBarWidget::updateSearchJumpToDateVisibility() {
@@ -1760,6 +1787,10 @@ void TopBarWidget::searchEnableChooseFromUser(bool enable, bool visible) {
 		_chooseFromUser.create(
 			this,
 			object_ptr<Ui::IconButton>(this, st::dialogsSearchFromTopBar));
+		_chooseFromUser->setUpdatedCallback([=](float64) {
+			updateSearchAdditionalMargins();
+			updateChooseFromUserGeometry();
+		});
 		_chooseFromUser->toggle(visible, anim::type::instant);
 		_chooseFromUser->entity()->clicks(
 		) | rpl::to_empty | rpl::start_to_stream(
@@ -1768,11 +1799,35 @@ void TopBarWidget::searchEnableChooseFromUser(bool enable, bool visible) {
 	} else {
 		_chooseFromUser->toggle(visible, anim::type::normal);
 	}
-	auto additional = QMargins();
-	if (_chooseFromUser && _chooseFromUser->toggled()) {
-		additional.setRight(_chooseFromUser->width());
+	updateSearchAdditionalMargins();
+	updateControlsVisibility();
+	updateControlsGeometry();
+}
+
+void TopBarWidget::searchEnableChooseType(bool enable, bool visible) {
+	if (!_searchMode) {
+		return;
+	} else if (!enable) {
+		_chooseType.destroy();
+	} else if (!_chooseType) {
+		_chooseType.create(
+			this,
+			object_ptr<Ui::IconButton>(this, st::dialogsSearchTypeTopBar));
+		_chooseType->entity()->setAccessibleName(
+			tr::ayu_SearchFilterType(tr::now));
+		_chooseType->setUpdatedCallback([=](float64) {
+			updateSearchAdditionalMargins();
+			updateChooseFromUserGeometry();
+		});
+		_chooseType->toggle(visible, anim::type::instant);
+		_chooseType->entity()->clicks(
+		) | rpl::to_empty | rpl::start_to_stream(
+			_chooseTypeRequests,
+			_chooseType->lifetime());
+	} else {
+		_chooseType->toggle(visible, anim::type::normal);
 	}
-	_searchField->setAdditionalMargins(additional);
+	updateSearchAdditionalMargins();
 	updateControlsVisibility();
 	updateControlsGeometry();
 }

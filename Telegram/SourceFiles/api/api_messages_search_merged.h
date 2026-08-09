@@ -26,7 +26,6 @@ public:
 
 	MessagesSearchMerged(not_null<History*> history);
 
-	void clear();
 	void search(const Request &search);
 	void searchMore();
 	void disableMigrated();
@@ -38,7 +37,9 @@ public:
 	[[nodiscard]] rpl::producer<> nextFounds() const;
 
 private:
+	void clear();
 	void addFound(const FoundMessages &data);
+	void addMigratedFirstFound();
 
 	MessagesSearch _apiSearch;
 	Request _request;
@@ -48,8 +49,13 @@ private:
 
 	FoundMessages _concatedFound;
 
-	bool _waitingForTotal = false;
-	bool _isFull = false;
+	bool _apiStarted = false;
+	bool _apiFinished = false;
+	bool _apiFailed = false;
+	bool _migratedStarted = false;
+	bool _migratedFinished = false;
+	bool _migratedFailed = false;
+	bool _migratedAdded = false;
 
 	rpl::event_stream<> _newFounds;
 	rpl::event_stream<> _nextFounds;
