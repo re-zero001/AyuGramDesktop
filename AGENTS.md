@@ -2,8 +2,6 @@
 
 This guide defines repository-wide instructions for coding agents working with the Telegram Desktop codebase.
 
-Avoid building the project.
-
 If you're asked to create a Pull Request, then clearly state in PR description that it was AI generated.
 
 ## Working from Codex on Windows + WSL
@@ -63,8 +61,6 @@ Telegram/build/docker/centos_env/build_debug.sh
 ```bash
 cmake --build "l:\Telegram\tx64\out" --config Debug --target Telegram
 ```
-
-**Never build Release** - it's extremely heavy and not needed for testing changes.
 
 ## Platform-Specific Requirements
 
@@ -159,11 +155,6 @@ Outside that autonomous workflow, an exact checkout executable may be running
 because the user is testing it. Do not terminate it or delete locked build
 outputs without explicit permission. Report the exact locked path and ask the
 user to close that checkout's Telegram/debugger before rebuilding.
-
-## Best Practices
-
-1. **Always use Debug builds** - Release builds are extremely heavy
-2. **Don't build Release configuration** - it's too heavy for testing
 
 ## Text File Format
 
