@@ -70,6 +70,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // AyuGram includes
 #include "ayu/features/forward/ayu_forward.h"
 #include "ayu/ayu_settings.h"
+#include "ayu/utils/telegram_helpers.h"
 
 
 class ShareBox::Inner final : public Ui::RpWidget {
@@ -1834,6 +1835,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 		} else if (!checkPaid()) {
 			return;
 		}
+		applyGhostScheduling(&history->session(), options);
 
 		using Flag = MTPmessages_ForwardMessages::Flag;
 		auto commonSendFlags = MTPmessages_ForwardMessages::Flags(0);
