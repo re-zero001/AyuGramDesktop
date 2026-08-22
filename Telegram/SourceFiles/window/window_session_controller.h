@@ -875,6 +875,12 @@ private:
 	rpl::variable<Data::CommunityInfo*> _openedCommunity;
 	rpl::lifetime _openedCommunityLifetime;
 
+	struct CommunityReturnState {
+		FilterId filterId = 0;
+		FolderId folderId = 0;
+	};
+	std::optional<CommunityReturnState> _communityReturnState;
+
 	rpl::event_stream<> _filtersMenuChanged;
 
 	const std::shared_ptr<Ui::ChatTheme> _defaultChatTheme;

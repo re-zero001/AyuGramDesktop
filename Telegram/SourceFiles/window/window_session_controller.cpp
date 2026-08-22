@@ -2110,9 +2110,19 @@ bool SessionController::openCommunityInDifferentWindow(
 void SessionController::openCommunity(not_null<Data::CommunityInfo*> info) {
 	if (openCommunityInDifferentWindow(info)) {
 		return;
-	} else if (_openedCommunity.current() != info) {
+	}
+	const auto enteringCommunity = !_openedCommunity.current();
+	if (_openedCommunity.current() != info) {
 		resetFakeUnreadWhileOpened();
 	}
+	const auto returnState = enteringCommunity
+		? CommunityReturnState{
+			.filterId = activeChatsFilterCurrent(),
+			.folderId = _openedFolder.current()
+				? _openedFolder.current()->id()
+				: 0,
+		}
+		: CommunityReturnState{};
 	if (activeChatsFilterCurrent() != 0) {
 		setActiveChatsFilter(0);
 	} else if (adaptive().isOneColumn()) {
@@ -2121,6 +2131,9 @@ void SessionController::openCommunity(not_null<Data::CommunityInfo*> info) {
 	closeForum();
 	closeFolder();
 	_openedCommunity = info.get();
+	if (enteringCommunity) {
+		_communityReturnState = returnState;
+	}
 
 	const auto community = info->channel();
 	if (!community->wasFullUpdated()) {
@@ -2150,13 +2163,33 @@ void SessionController::openCommunity(not_null<Data::CommunityInfo*> info) {
 }
 
 void SessionController::closeCommunity() {
-	if (_openedCommunity.current()
+	const auto wasOpened = (_openedCommunity.current() != nullptr);
+	if (wasOpened
 		&& windowId().type == SeparateType::Community) {
 		Core::App().closeWindow(_window);
 		return;
 	}
 	_openedCommunityLifetime.destroy();
 	_openedCommunity = nullptr;
+	const auto returnState = base::take(_communityReturnState);
+	if (!wasOpened
+		|| !returnState
+		|| activeChatsFilterCurrent() != 0
+		|| _openedFolder.current()) {
+		return;
+	}
+	if (returnState->folderId) {
+		if (const auto folder = session().data().folderLoaded(
+			returnState->folderId)) {
+			openFolder(folder);
+		}
+	} else if (returnState->filterId) {
+		const auto &filters = session().data().chatsFilters().list();
+		if (ranges::find(filters, returnState->filterId, &Data::ChatFilter::id)
+			!= end(filters)) {
+			setActiveChatsFilter(returnState->filterId);
+		}
+	}
 }
 
 const rpl::variable<Data::CommunityInfo*> &
@@ -3303,6 +3336,9 @@ void SessionController::setActiveChatsFilter(
 	const auto changed = (activeChatsFilterCurrent() != id);
 	if (changed) {
 		resetFakeUnreadWhileOpened();
+		if (_openedCommunity.current()) {
+			_communityReturnState = std::nullopt;
+		}
 	}
 	_activeChatsFilter.force_assign(id);
 	if (id || !changed) {

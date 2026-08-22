@@ -2901,6 +2901,14 @@ void MainWidget::handleHistoryBack() {
 		&& _stack.empty()
 		&& (!rootPeer || rootPeer->forum() != openedForum)) {
 		_controller->closeForum();
+	} else if (const auto openedCommunity
+		= _controller->openedCommunity().current()
+		; !openedForum
+		&& openedCommunity
+		&& _stack.empty()
+		&& (!rootPeer
+			|| rootPeer->asChannel() != openedCommunity->channel())) {
+		_controller->closeCommunity();
 	} else if (!openedFolder
 		|| (rootFolder == openedFolder)
 		|| (!_dialogs || _dialogs->isHidden())) {
