@@ -701,7 +701,7 @@ void Reply::updateName(
 				+ std::min(_text.maxWidth(), st::maxSignatureSize)),
 			st::normalFont->height);
 	_maxWidth = std::max(nameMaxWidth, optimalTextSize.width());
-	if (!data->displaying()) {
+	if (!_displaying) {
 		const auto unavailable = data->unavailable();
 		_stateText = ((fields.messageId || fields.storyId) && !unavailable)
 			? tr::lng_profile_loading(tr::now)
