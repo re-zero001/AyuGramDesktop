@@ -1861,6 +1861,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 			| (videoTimestamp.has_value()
 				? Flag::f_video_timestamp
 				: Flag(0));
+		}
 		const auto ranges = CollectForwardRanges(items);
 		if (ranges.empty()) {
 			return;
@@ -1999,6 +2000,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 			struct ThreadForwardState final {
 				int pending = 0;
 				bool failed = false;
+				Api::SendOptions commentOptions;
 			};
 			const auto threadState = std::make_shared<ThreadForwardState>();
 			for (const auto &range : ranges) {
@@ -2015,6 +2017,7 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 				if (starsPaid) {
 					options.starsApproved -= starsPaid;
 				}
+				threadState->commentOptions = options;
 				const auto sendFlags = commonSendFlags
 					| (ShouldSendSilent(peer, options)
 						? Flag::f_silent
@@ -2086,7 +2089,9 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 							&& !threadState->failed
 							&& sendCommentAfter) {
 							auto message = Api::MessageToSend(
-								Api::SendAction(effectiveThread, options));
+								Api::SendAction(
+									effectiveThread,
+									threadState->commentOptions));
 							message.textWithTags = comment;
 							message.action.clearDraft = false;
 							threadHistory->session().api().sendMessage(

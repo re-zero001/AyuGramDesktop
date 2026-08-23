@@ -3510,7 +3510,9 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 		const auto itemId = item ? item->fullId() : FullMsgId();
 		addReplyAction(item);
 
-		const bool isAyuForwardMenu = item ? isAyuForwardForItems(collectForwardItemsForItem(item)): false;
+		const auto isAyuForwardMenu = item
+			? isAyuForwardForItems(collectForwardItemsForItem(item))
+			: false;
 
 		if (isUponSelected > 0) {
 			const auto selectedText = getSelectedText();
@@ -3603,36 +3605,47 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 							[=] { forwardItem(itemId); },
 							&st::menuIconForward);
 					}
-				fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoQuote(tr::now), [=] {
-					forwardItemNoQuote(itemId);
-				}, &st::menuIconUserHide);
-				if (ItemsForwardCaptionsCount(collectForwardItemsForItem(item, false)) > 0) {
-					fwdSubmenu->addAction(tr::ayu_ContextForwardMsgNoCaption(tr::now), [=] {
-						forwardItemNoCaption(itemId);
-					}, &st::menuIconCaptionHide);
-				}
-				const auto owner = &item->history()->owner();
-				fwdSubmenu->addAction(tr::ayu_ForwardToSavedMessage(tr::now), [owner, itemId] {
-					const auto item = owner->message(itemId);
-					if (!item || !IsServerMsgId(item->id)) {
-						return;
+					fwdSubmenu->addAction(
+						tr::ayu_ContextForwardMsgNoQuote(tr::now),
+						[=] { forwardItemNoQuote(itemId); },
+						&st::menuIconUserHide);
+					if (ItemsForwardCaptionsCount(
+							collectForwardItemsForItem(item, false)) > 0) {
+						fwdSubmenu->addAction(
+							tr::ayu_ContextForwardMsgNoCaption(tr::now),
+							[=] { forwardItemNoCaption(itemId); },
+							&st::menuIconCaptionHide);
 					}
-					const auto api = &item->history()->session().api();
-					const auto history = owner->history(
-						api->session().user()->asUser());
-					auto action = Api::SendAction(history);
-					action.clearDraft = false;
-					action.generateLocal = false;
-					auto resolved = history->resolveForwardDraft(Data::ForwardDraft{
-						.ids = MessageIdsList(1, itemId),
-					});
-					api->forwardMessages(std::move(resolved), action, [] {
-						Ui::Toast::Show(tr::lng_share_done(tr::now));
-					});
-				}, &st::menuIconFave);
-				if (!fwdSubmenu->empty()) {
-					_menu->addAction(tr::ayu_ContextForward(tr::now), std::move(fwdSubmenu), &st::menuIconForward);
-				}
+					const auto owner = &item->history()->owner();
+					fwdSubmenu->addAction(
+						tr::ayu_ForwardToSavedMessage(tr::now),
+						[owner, itemId] {
+							const auto item = owner->message(itemId);
+							if (!item || !IsServerMsgId(item->id)) {
+								return;
+							}
+							const auto api = &item->history()->session().api();
+							const auto history = owner->history(
+								api->session().user()->asUser());
+							auto action = Api::SendAction(history);
+							action.clearDraft = false;
+							action.generateLocal = false;
+							auto resolved = history->resolveForwardDraft(
+								Data::ForwardDraft{
+									.ids = MessageIdsList(1, itemId),
+								});
+							api->forwardMessages(
+								std::move(resolved), action, [] {
+									Ui::Toast::Show(tr::lng_share_done(tr::now));
+								});
+						},
+						&st::menuIconFave);
+					if (!fwdSubmenu->empty()) {
+						_menu->addAction(
+							tr::ayu_ContextForward(tr::now),
+							std::move(fwdSubmenu),
+							&st::menuIconForward);
+					}
 				}
 
 				AyuUi::AddRepeatMessageAction(

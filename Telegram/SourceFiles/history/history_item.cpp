@@ -534,7 +534,11 @@ HistoryItem::HistoryItem(
 		setServiceText({
 			tr::lng_message_empty(tr::now, tr::marked)
 		});
-	} else if (checked == MediaCheckResult::HasExpiredMediaTimeToLive) {
+	} else if ((checked == MediaCheckResult::HasExpiredMediaTimeToLive)
+			|| (!AyuSettings::getInstance().saveDeletedMessages()
+				&& checked == MediaCheckResult::Good
+				&& media
+				&& ShowTtlMediaAsExpired(this, *media))) {
 		createServiceFromMtp(data);
 		setReactions(data.vreactions());
 		applyTTL(data);
@@ -544,36 +548,9 @@ HistoryItem::HistoryItem(
 		setReactions(data.vreactions());
 		applyTTL(data);
 	} else {
-		auto skipSetText = false;
 		createComponents(data);
 		if (media) {
 			setMedia(*media);
-			if (checked == MediaCheckResult::HasUnsupportedTimeToLive) {
-				media->match(
-					[&](const MTPDmessageMediaPhoto &media)
-					{
-						if (!data.is_media_unread()) {
-							createServiceFromMtp(data);
-							skipSetText = true;
-						}
-
-						const auto time = media.vttl_seconds()->v;
-						setAyuHint(formatTTL(time, false));
-						_unsupportedTTL = time;
-					},
-					[&](const MTPDmessageMediaDocument &media)
-					{
-						if (!data.is_media_unread()) {
-							createServiceFromMtp(data);
-							skipSetText = true;
-						}
-
-						const auto time = media.vttl_seconds()->v;
-						setAyuHint(formatTTL(time, true));
-						_unsupportedTTL = time;
-					},
-					[](const auto &) {});
-			}
 		}
 		if (const auto media = _media.get()) {
 			if (media->ttlSeconds()
@@ -590,7 +567,7 @@ HistoryItem::HistoryItem(
 			const auto richPage = Iv::ParseRichPage(&history->session(), *richMessage);
 			setRichPage(richPage);
 			setText(Iv::FlattenRichPageSummary(richPage));
-		} else if (!skipSetText) {
+		} else {
 			auto textWithEntities = TextWithEntities{
 				qs(data.vmessage()),
 				Api::EntitiesFromMTP(

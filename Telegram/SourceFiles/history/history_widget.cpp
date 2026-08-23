@@ -10930,10 +10930,10 @@ void HistoryWidget::forwardSelected() {
 		false,
 		false,
 		[=] {
-		if (const auto strong = weak.get()) {
-			strong->clearSelected();
-		}
-	});
+			if (const auto strong = weak.get()) {
+				strong->clearSelected();
+			}
+		});
 }
 
 void HistoryWidget::forwardNoQuoteSelected() {
@@ -10947,10 +10947,10 @@ void HistoryWidget::forwardNoQuoteSelected() {
 		true,
 		false,
 		[=] {
-		if (const auto strong = weak.get()) {
-			strong->clearSelected();
-		}
-	});
+			if (const auto strong = weak.get()) {
+				strong->clearSelected();
+			}
+		});
 }
 
 void HistoryWidget::forwardNoCaptionSelected() {
@@ -10964,10 +10964,10 @@ void HistoryWidget::forwardNoCaptionSelected() {
 		false,
 		true,
 		[=] {
-		if (const auto strong = weak.get()) {
-			strong->clearSelected();
-		}
-	});
+			if (const auto strong = weak.get()) {
+				strong->clearSelected();
+			}
+		});
 }
 
 void HistoryWidget::confirmDeleteSelected() {
