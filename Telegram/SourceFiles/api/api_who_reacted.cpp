@@ -545,12 +545,23 @@ void RegenerateUserpics(not_null<State*> state, int small, int large) {
 		if (peer->hasUserpic() && peer->useEmptyUserpic(userpic.view)) {
 			state->someUserpicsNotLoaded = true;
 		}
-		if (userpic.uniqueKey == key) {
+		const auto keyChanged = (userpic.uniqueKey != key);
+		const auto participantKeyChanged = (participant.userpicKey != key);
+		const auto needsSmall = (i < Ui::WhoReadParticipant::kMaxSmallUserpics)
+			&& (participant.userpicSmall.isNull()
+				|| keyChanged
+				|| participantKeyChanged);
+		if (!keyChanged && !participantKeyChanged && !needsSmall) {
 			continue;
 		}
-		participant.userpicKey = userpic.uniqueKey = key;
-		participant.userpicLarge = GenerateUserpic(userpic, large);
-		if (i < Ui::WhoReadParticipant::kMaxSmallUserpics) {
+		if (keyChanged || participantKeyChanged) {
+			participant.userpicKey = userpic.uniqueKey = key;
+			participant.userpicLarge = GenerateUserpic(userpic, large);
+			if (i >= Ui::WhoReadParticipant::kMaxSmallUserpics) {
+				participant.userpicSmall = QImage();
+			}
+		}
+		if (needsSmall) {
 			participant.userpicSmall = GenerateUserpic(userpic, small);
 		}
 	}
