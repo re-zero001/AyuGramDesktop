@@ -488,7 +488,7 @@ void StickersListWidget::readVisibleFeatured(
 		0,
 		_featuredSetsCount);
 	for (auto i = rowFrom; i < rowTo; ++i) {
-		auto &set = _officialSets[i];
+		const auto &set = _officialSets[i];
 		if (!(set.flags & SetFlag::Unread)) {
 			continue;
 		}
@@ -1942,7 +1942,7 @@ void StickersListWidget::clearSavedStickerFrames() {
 }
 
 void StickersListWidget::pauseInvisibleLottieIn(const SectionInfo &info) {
-	auto &set = shownSets()[info.section];
+	const auto &set = shownSets()[info.section];
 	const auto player = set.lottiePlayer.get();
 	if (!player) {
 		return;
@@ -2029,7 +2029,7 @@ void StickersListWidget::ensureLottiePlayer(Set &set) {
 
 	raw->updates(
 	) | rpl::on_next([=] {
-		auto &sets = shownSets();
+		const auto &sets = shownSets();
 		enumerateSections([&](const SectionInfo &info) {
 			if (sets[info.section].lottiePlayer.get() != raw) {
 				return true;
@@ -2130,7 +2130,7 @@ void StickersListWidget::updateSets() {
 		return;
 	}
 	auto repaint = base::take(_repaintSetsIds);
-	auto &sets = shownSets();
+	const auto &sets = shownSets();
 	enumerateSections([&](const SectionInfo &info) {
 		if (repaint.contains(sets[info.section].id)) {
 			updateSet(info);
@@ -2140,7 +2140,7 @@ void StickersListWidget::updateSets() {
 }
 
 void StickersListWidget::updateSet(const SectionInfo &info) {
-	auto &set = shownSets()[info.section];
+	const auto &set = shownSets()[info.section];
 
 	const auto now = crl::now();
 	const auto delay = std::max(
@@ -2604,7 +2604,7 @@ void StickersListWidget::showStickerSetBox(
 base::unique_qptr<Ui::PopupMenu> StickersListWidget::fillContextMenu(
 		const SendMenu::Details &details) {
 	auto selected = _selected;
-	auto &sets = shownSets();
+	const auto &sets = shownSets();
 	if (v::is_null(selected) || !v::is_null(_pressed)) {
 		return nullptr;
 	}
@@ -2624,7 +2624,7 @@ base::unique_qptr<Ui::PopupMenu> StickersListWidget::fillContextMenu(
 	const auto section = sticker->section;
 	const auto index = sticker->index;
 	Assert(section >= 0 && section < sets.size());
-	auto &set = sets[section];
+	const auto &set = sets[section];
 	Assert(index >= 0 && index < set.stickers.size());
 
 	auto menu = base::make_unique_q<Ui::PopupMenu>(this, st().menu);
@@ -2828,7 +2828,7 @@ void StickersListWidget::mouseReleaseEvent(QMouseEvent *e) {
 		return;
 	}
 
-	auto &sets = shownSets();
+	const auto &sets = shownSets();
 	if (!v::is_null(pressed) && pressed == _selected) {
 		if (std::get_if<OverSearchBack>(&pressed)) {
 			backToSearchResults();
@@ -3639,7 +3639,7 @@ void StickersListWidget::updateSelected() {
 		setSelected(newSelected);
 		return;
 	}
-	auto &sets = shownSets();
+	const auto &sets = shownSets();
 	auto sx = (rtl() ? width() - p.x() : p.x()) - stickersLeft();
 	if (!shownSets().empty()) {
 		auto info = sectionInfoByOffset(p.y());
@@ -3727,7 +3727,7 @@ void StickersListWidget::setSelected(OverState newSelected) {
 			? style::cur_pointer
 			: style::cur_default);
 
-		auto &sets = shownSets();
+		const auto &sets = shownSets();
 		auto updateSelected = [&]() {
 			if (auto sticker = std::get_if<OverSticker>(&_selected)) {
 				rtlupdate(stickerRect(sticker->section, sticker->index));
