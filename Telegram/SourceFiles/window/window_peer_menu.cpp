@@ -331,6 +331,7 @@ private:
 	void addThemeEdit();
 	void addToggleNoForwards();
 	void addBlockUser();
+	void addBanFromChannel();
 	void addViewDiscussion();
 	void addDirectMessages();
 	void addToggleTopicClosed();
@@ -978,6 +979,53 @@ void Filler::addBlockUser() {
 	if (user->blockStatus() == UserData::BlockStatus::Unknown) {
 		user->session().api().requestFullPeer(user);
 	}
+}
+
+void Filler::addBanFromChannel() {
+	const auto sublist = _sublist;
+	const auto parent = sublist ? sublist->parentChat() : nullptr;
+	const auto broadcast = parent ? parent->monoforumBroadcast() : nullptr;
+	if (!broadcast) {
+		return;
+	}
+	const auto participant = sublist->sublistPeer();
+	if (!broadcast->canRestrictParticipant(participant)) {
+		return;
+	}
+	const auto api = &broadcast->session().api();
+	const auto show = _controller->uiShow();
+	const auto banned = std::make_shared<rpl::variable<bool>>(false);
+	*banned = api->chatParticipants().kickedValue(broadcast, participant);
+	const auto label = [](bool banned) {
+		return banned
+			? tr::lng_context_monoforum_unban(tr::now)
+			: tr::lng_context_monoforum_ban(tr::now);
+	};
+	const auto action = _addAction(
+		label(banned->current()),
+		[=] {
+			if (banned->current()) {
+				api->chatParticipants().unblock(broadcast, participant);
+				return;
+			}
+			show->show(Ui::MakeConfirmBox({
+				.text = tr::lng_profile_sure_kick_channel(
+					tr::now,
+					lt_user,
+					participant->name()),
+				.confirmed = [=](Fn<void()> close) {
+					api->chatParticipants().kick(
+						broadcast,
+						participant,
+						{ broadcast->restrictions(), 0 });
+					close();
+				},
+				.confirmText = tr::lng_box_remove(),
+			}));
+		},
+		(banned->current() ? &st::menuIconUnblock : &st::menuIconBlock));
+
+	SetActionText(action, banned->value() | rpl::map(label));
 }
 
 void Filler::addViewDiscussion() {
@@ -1913,6 +1961,7 @@ void Filler::fillContextMenuActions() {
 			addBlockUser();
 		}
 	}
+	addBanFromChannel();
 	addClearHistory();
 	AyuUi::AddDeleteOwnMessagesAction(_peer, _topic, _controller, _addAction);
 	addDeleteChat();
@@ -1972,6 +2021,7 @@ void Filler::fillProfileActions() {
 	addToggleNoForwards();
 	addToggleFolder();
 	addBlockUser();
+	addBanFromChannel();
 	addReport();
 	addLeaveChat();
 	addDeleteContact();
@@ -2105,6 +2155,7 @@ void Filler::fillSavedSublistActions() {
 void Filler::fillMonoforumPeerActions() {
 	Expects(_sublist != nullptr);
 
+	addBanFromChannel();
 	addToggleFee();
 }
 

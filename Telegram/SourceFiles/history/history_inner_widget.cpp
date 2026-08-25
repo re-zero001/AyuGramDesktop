@@ -1480,10 +1480,6 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 	auto clip = e->rect();
 
-	if (_thanosController) {
-		_thanosController->clearRemovalHeight();
-	}
-
 	auto context = preparePaintContext(clip);
 	context.gestureHorizontal = _gestureHorizontal;
 	context.highlightPathCache = &_highlightPathCache;
@@ -4758,9 +4754,6 @@ void HistoryInner::checkActivation() {
 }
 
 void HistoryInner::recountHistoryGeometry(bool initial) {
-	if (_thanosController) {
-		_thanosController->clearRemovalHeight();
-	}
 	_contentWidth = _scroll->width();
 
 	if (_history->hasPendingResizedItems()
@@ -5058,16 +5051,14 @@ void HistoryInner::changeItemsRevealHeight(int revealHeight) {
 }
 
 void HistoryInner::updateSize() {
+	if (_thanosController) {
+		_thanosController->flushRemovals(historyHeight() - _revealHeight);
+	}
 	const auto visibleHeight = _scroll->height();
 	auto collapseGapTotal = 0;
 	for (const auto &gap : collapseGaps()) {
 		collapseGapTotal += gap.height;
 	}
-	collapseGapTotal = std::max(
-		collapseGapTotal - (_thanosController
-			? _thanosController->removalHeight()
-			: 0),
-		0);
 	const auto itemsHeight = historyHeight() - _revealHeight + collapseGapTotal;
 	const auto aboutAboveHistory = _aboutView && _aboutView->aboveHistory();
 	const auto aboutBelowHistory = _aboutView && !aboutAboveHistory;
@@ -5173,6 +5164,9 @@ void HistoryInner::setupThanosEffect() {
 			.visibleAreaTop = [=] { return _visibleAreaTop; },
 			.visibleAreaBottom = [=] { return _visibleAreaBottom; },
 			.contentWidth = [=] { return width(); },
+			.contentHeight = [=] {
+				return historyHeight() - _revealHeight;
+			},
 			.preparePaintContext = [=](QRect clip) {
 				return preparePaintContext(clip);
 			},

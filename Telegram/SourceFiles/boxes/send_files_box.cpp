@@ -1264,13 +1264,17 @@ void SendFilesBox::addMenuButton() {
 		_menu = base::make_unique_q<Ui::PopupMenu>(top, tabbed.menu);
 		_menu->setForcedOrigin(Ui::PanelAnimation::Origin::TopRight);
 		const auto position = QCursor::pos();
-		SendMenu::FillSendMenu(
+		const auto result = SendMenu::FillSendMenu(
 			_menu.get(),
-			_show,
+			nullptr, // showForEffect
 			_sendMenuDetails(),
 			_sendMenuCallback,
 			&_st.tabbed.icons,
 			position);
+		if (result != SendMenu::FillMenuResult::Prepared) {
+			_menu = nullptr;
+			return true;
+		}
 
 		using ImageInfo = Ui::PreparedFileInformation::Image;
 		if (_list.files.size() == 1 && std::get_if<ImageInfo>(&_list.files[0].information->media)) {
@@ -1301,7 +1305,20 @@ void SendFilesBox::addMenuButton() {
 				},
 				&st::menuIconStickers);
 		}
-		_menu->popup(position);
+
+		if (_show) {
+			const auto attachResult = SendMenu::AttachSendMenuEffect(
+				_menu.get(),
+				_show,
+				_sendMenuDetails(),
+				_sendMenuCallback,
+				position);
+			if (attachResult != SendMenu::FillMenuResult::Prepared) {
+				_menu = nullptr;
+				return true;
+			}
+		}
+		_menu->popupPrepared();
 		return true;
 	});
 }

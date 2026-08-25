@@ -810,7 +810,7 @@ ChatWidget::ChatWidget(
 				action.replyTo.messageId);
 			const auto replyMatches = action.replyTo.messageId
 				&& (action.replyTo.messageId
-					== _composeControls->replyingToMessage().messageId);
+					== _composeControls->draftReplyingToMessage().messageId);
 			auto cancelledReply = false;
 			auto cancelledSuggest = false;
 			if (action.options.scheduled || !_justMarkingAsRead) {
@@ -1640,7 +1640,7 @@ void ChatWidget::setupComposeControls() {
 
 	_composeControls->scrollToMaxRequests(
 	) | rpl::on_next([=] {
-		listScrollTo(_scroll->scrollTopMax());
+		send({});
 	}, lifetime());
 
 	_composeControls->sendVoiceRequests(
@@ -2572,23 +2572,29 @@ void ChatWidget::sendTextWithTags(
 		.ignoreRestrictions = ephemeral,
 	};
 	request.messagesCount = ComputeSendingMessagesCount(_history, request);
-	const auto error = GetErrorForSending(_peer, request);
-	if (error) {
-		Data::ShowSendErrorToast(controller(), _peer, error);
-		return;
-	}
-	if (!ephemeral) {
-		const auto withPaymentApproved = [=](int approved) {
-			auto copy = options;
-			copy.starsApproved = approved;
-			sendTextWithTags(textWithTags, useCurrentWebPageDraft, copy, done);
-		};
-		const auto checked = checkSendPayment(
-			request.messagesCount,
-			message.action.options,
-			withPaymentApproved);
-		if (!checked) {
+	if (_canSendMessages) {
+		const auto error = GetErrorForSending(_peer, request);
+		if (error) {
+			Data::ShowSendErrorToast(controller(), _peer, error);
 			return;
+		}
+		if (!ephemeral) {
+			const auto withPaymentApproved = [=](int approved) {
+				auto copy = options;
+				copy.starsApproved = approved;
+				sendTextWithTags(
+					textWithTags,
+					useCurrentWebPageDraft,
+					copy,
+					done);
+			};
+			const auto checked = checkSendPayment(
+				request.messagesCount,
+				message.action.options,
+				withPaymentApproved);
+			if (!checked) {
+				return;
+			}
 		}
 	}
 
@@ -4586,6 +4592,9 @@ void ChatWidget::setPinnedVisibility(bool shown) {
 
 void ChatWidget::showAnimatedHook(
 		const Window::SectionSlideParams &params) {
+	if (!params.fromBottom) {
+		_topBar->show();
+	}
 	_topBar->setAnimatingMode(true);
 	_topControls->setAnimatingMode(true);
 	if (params.withTopBarShadow && !params.fromBottom) {
@@ -4712,9 +4721,16 @@ void ChatWidget::listDeleteRequest() {
 
 void ChatWidget::listTryProcessKeyInput(not_null<QKeyEvent*> e) {
 	const auto key = e->key();
-	if ((key == Qt::Key_Return || key == Qt::Key_Enter)
-		&& _bottom->botStartShown()) {
-		sendBotStartCommand();
+	if (key == Qt::Key_Return || key == Qt::Key_Enter) {
+		if (_bottom->botStartShown()) {
+			sendBotStartCommand();
+		}
+		if (!_canSendMessages
+			&& Ui::InputField::ShouldSubmit(
+				Core::App().settings().sendSubmitWay(),
+				e->modifiers())) {
+			send({});
+		}
 	} else if ((key == Qt::Key_O)
 		&& (e->modifiers() == Qt::ControlModifier)) {
 		if (!_choosingAttach) {
@@ -5653,10 +5669,9 @@ bool ChatWidget::lastForceReplyReplied() const {
 }
 
 bool ChatWidget::cancelReply(bool lastKeyboardUsed) {
-	auto wasReply = false;
-	if (_composeControls->replyingToMessage()) {
-		wasReply = true;
-		_composeControls->cancelReplyMessage();
+	const auto wasReply = bool(_composeControls->replyingToMessage());
+	_composeControls->cancelReplyMessage();
+	if (wasReply) {
 		updateBotKeyboard();
 		refreshTopBarActiveChat();
 		updateControlsVisibility();
@@ -5774,7 +5789,9 @@ void ChatWidget::listOpenPhoto(
 		photo,
 		{
 			context,
-			item ? item->topicRootId() : _repliesRootId,
+			(item && !_monoforumPeerId)
+				? item->topicRootId()
+				: _repliesRootId,
 			_monoforumPeerId,
 			showDrawButton,
 		});
@@ -5794,7 +5811,9 @@ void ChatWidget::listOpenDocument(
 		showInMediaView,
 		{
 			context,
-			item ? item->topicRootId() : _repliesRootId,
+			(item && !_monoforumPeerId)
+				? item->topicRootId()
+				: _repliesRootId,
 			_monoforumPeerId,
 			showDrawButton,
 		});
